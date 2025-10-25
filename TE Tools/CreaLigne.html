@@ -579,5 +579,38 @@
     </script>
 
 </body>
+<a href="../index.html">⬅ Retour à l’accueil</a>
+<hr>
+<script type="module">
+    import { ajouterLigne, getLignes, listenLignes } from "../js/data.js";
+
+    const btnAjouter = document.getElementById("btnAjouter");
+    const ligneIdInput = document.getElementById("ligneId");
+    const ligneNomInput = document.getElementById("ligneNom");
+    const listeLignes = document.getElementById("listeLignes");
+
+    async function afficherLignes() {
+        const lignes = await getLignes();
+        listeLignes.innerHTML = "";
+        lignes.forEach(l => {
+            const li = document.createElement("li");
+            li.textContent = `${l.id} - ${l.nom}`;
+            listeLignes.appendChild(li);
+        });
+    }
+
+    btnAjouter.addEventListener("click", async () => {
+        const id = ligneIdInput.value.trim();
+        const nom = ligneNomInput.value.trim();
+        if (id && nom) {
+            await ajouterLigne(id, nom);
+            ligneIdInput.value = "";
+            ligneNomInput.value = "";
+        }
+    });
+
+    listenLignes(() => afficherLignes());
+    afficherLignes();
+</script>
 
 </html>

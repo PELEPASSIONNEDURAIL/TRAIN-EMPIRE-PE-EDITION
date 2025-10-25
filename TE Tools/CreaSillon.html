@@ -780,5 +780,52 @@
 
     </script>
 </body>
+<a href="../index.html">⬅ Retour à l’accueil</a>
+<hr>
+<script type="module">
+    import { ajouterSillon, getSillons, listenSillons, getLignes } from "../js/data.js";
+
+    const btnAjouter = document.getElementById("btnAjouter");
+    const sillonIdInput = document.getElementById("sillonId");
+    const ligneSelect = document.getElementById("ligneSelect");
+    const horaireInput = document.getElementById("horaire");
+    const listeSillons = document.getElementById("listeSillons");
+
+    async function remplirLignes() {
+        const lignes = await getLignes();
+        ligneSelect.innerHTML = "";
+        lignes.forEach(l => {
+            const opt = document.createElement("option");
+            opt.value = l.id;
+            opt.textContent = `${l.id} - ${l.nom}`;
+            ligneSelect.appendChild(opt);
+        });
+    }
+
+    async function afficherSillons() {
+        const sillons = await getSillons();
+        listeSillons.innerHTML = "";
+        sillons.forEach(s => {
+            const li = document.createElement("li");
+            li.textContent = `${s.id} - Ligne: ${s.ligne} - Horaire: ${s.horaire}`;
+            listeSillons.appendChild(li);
+        });
+    }
+
+    btnAjouter.addEventListener("click", async () => {
+        const id = sillonIdInput.value.trim();
+        const ligne = ligneSelect.value;
+        const horaire = horaireInput.value.trim();
+        if (id && ligne && horaire) {
+            await ajouterSillon(id, ligne, horaire);
+            sillonIdInput.value = "";
+            horaireInput.value = "";
+        }
+    });
+
+    listenSillons(() => afficherSillons());
+    remplirLignes();
+    afficherSillons();
+</script>
 
 </html>

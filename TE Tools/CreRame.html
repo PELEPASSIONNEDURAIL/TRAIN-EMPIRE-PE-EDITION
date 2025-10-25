@@ -384,5 +384,41 @@
             });
         </script>
 </body>
+<a href="../index.html">⬅ Retour à l’accueil</a>
+<hr>
+<script type="module">
+    import { ajouterDoc, getCollection, listenCollection } from "../js/data.js";
+
+    const btnAjouter = document.getElementById("btnAjouter");
+    const rameIdInput = document.getElementById("rameId");
+    const typeRameInput = document.getElementById("typeRame");
+    const compositionInput = document.getElementById("composition");
+    const listeRames = document.getElementById("listeRames");
+
+    async function afficherRames() {
+        const rames = await getCollection("rames");
+        listeRames.innerHTML = "";
+        rames.forEach(r => {
+            const li = document.createElement("li");
+            li.textContent = `${r.id} - ${r.typeRame} - ${r.composition}`;
+            listeRames.appendChild(li);
+        });
+    }
+
+    btnAjouter.addEventListener("click", async () => {
+        const id = rameIdInput.value.trim();
+        const typeRame = typeRameInput.value.trim();
+        const composition = compositionInput.value.trim();
+        if (id && typeRame && composition) {
+            await ajouterDoc("rames", id, { typeRame, composition });
+            rameIdInput.value = "";
+            typeRameInput.value = "";
+            compositionInput.value = "";
+        }
+    });
+
+    listenCollection("rames", () => afficherRames());
+    afficherRames();
+</script>
 
 </html>

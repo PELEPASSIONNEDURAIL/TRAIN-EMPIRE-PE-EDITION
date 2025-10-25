@@ -329,5 +329,41 @@
     </script>
 
 </body>
+<a href="../index.html">⬅ Retour à l’accueil</a>
+<hr>
+<script type="module">
+    import { ajouterTrain, getTrains, listenTrains } from "../js/data.js";
+
+    const btnAjouter = document.getElementById("btnAjouter");
+    const trainIdInput = document.getElementById("trainId");
+    const trainNomInput = document.getElementById("trainNom");
+    const trainTypeInput = document.getElementById("trainType");
+    const listeTrains = document.getElementById("listeTrains");
+
+    async function afficherTrains() {
+        const trains = await getTrains();
+        listeTrains.innerHTML = "";
+        trains.forEach(t => {
+            const li = document.createElement("li");
+            li.textContent = `${t.id} - ${t.nom} - ${t.type}`;
+            listeTrains.appendChild(li);
+        });
+    }
+
+    btnAjouter.addEventListener("click", async () => {
+        const id = trainIdInput.value.trim();
+        const nom = trainNomInput.value.trim();
+        const type = trainTypeInput.value.trim();
+        if (id && nom && type) {
+            await ajouterTrain(id, nom, type);
+            trainIdInput.value = "";
+            trainNomInput.value = "";
+            trainTypeInput.value = "";
+        }
+    });
+
+    listenTrains(() => afficherTrains());
+    afficherTrains();
+</script>
 
 </html>
