@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Train Empire Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #121212;
+            color: #eee;
+            font-family: sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 50%;
+        }
+
+        #controls {
+            padding: 10px;
+            max-height: 50%;
+            overflow-y: auto;
+        }
+
+        select,
+        input,
+        button {
+            margin: 5px;
+            background: #222;
+            color: #eee;
+            border: none;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #444;
+            padding: 5px;
+            text-align: center;
+        }
+
+        th {
+            background: #333;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2 style="text-align:center;">Train Empire Simulator</h2>
+    <div id="map"></div>
+    <div id="controls">
+        <div>
+            <label>Rame :</label>
+            <select id="trainSelect">
+                <option value="200">Rame 200 km/h</option>
+                <option value="250">Rame 250 km/h</option>
+                <option value="300">Rame 300 km/h</option>
+            </select>
+        </div>
+        <div>
+            <label>Gare Départ :</label>
+            <select id="gareStart"></select>
+            <label>Gares Intermédiaires :</label>
+            <select id="gareMiddle" multiple></select>
+            <label>Gare Terminus :</label>
+            <select id="gareEnd"></select>
+        </div>
+        <div>
+            <label>Heure départ :</label>
+            <input type="time" id="startTime" value="08:00">
+            <button id="generate">Générer Trajet</button>
+        </div>
+        <table id="tableSchedule">
+            <thead>
+                <tr>
+                    <th>Gare</th>
+                    <th>Distance (km)</th>
+                    <th>Vitesse Ligne (km/h)</th>
+                    <th>Temps passage</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+
+        // ======= Exemple JSON de base =======
+        const data = {
+            gares: [
+                { id: 1, nom: "Paris Gare de Lyon", lat: 48.844, lon: 2.374 },
+                { id: 2, nom: "Lyon Part-Dieu", lat: 45.760, lon: 4.859 },
+                { id: 3, nom: "Dijon Ville", lat: 47.316, lon: 5.041 },
+                { id: 4, nom: "Lille Flandres", lat: 50.632, lon: 3.062 },
+                { id: 5, nom: "Marseille St Charles", lat: 43.302, lon: 5.380 }
+            ],
+            troncons: [
+                { gareA: 1, gareB: 3, distance: 314, vitesse_max: 250 },
+                { gareA: 3, gareB: 2, distance: 195, vitesse_max: 250 },
+                { gareA: 2, gareB: 5, distance: 480, vitesse_max: 300 },
+                { gareA: 4, gareB: 1, distance: 220, vitesse_max: 200 }
+            ]
+        };
+
+        // ======= Initialisation carte =======
+        const map = L.map('map').setView([48, 5], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OSM & CARTO', subdomains: 'abcd', maxZoom: 19
+        }).addTo(map);
+
+        // Ajouter les gares
+        const markers = {};
+        data.gares.forEach(g => {
+            markers[g.id] = L.circleMarker([g.lat, g.lon], { radius: 5, color: 'cyan', fillColor: 'cyan', fillOpacity: 0.8 })
+                .addTo(map).bindPopup(g.nom);
+        });
+
+        // Ajouter les tronçons
+        data.troncons.forEach(t => {
+            const a = data.gares.find(g => g.id === t.gareA);
+            const b = data.gares.find(g => g.id === t.gareB);
+            if (a && b) {
+                let color = 'orange';
+                if (t.vitesse_max >= 300) color = 'lime';
+                else if (t.vitesse_max >= 250) color = 'yellow';
+                else color = 'red';
+                L.polyline([[a.lat, a.lon], [b.lat, b.lon]], { color: color, weight: 3 })
+                    .addTo(map)
+                    .bindPopup(`${a.nom} → ${b.nom}<br>${t.distance} km<br>Vitesse max ${t.vitesse_max} km/h`);
+            }
+        });
+
+        // ======= Remplir les select =======
+        const start = document.getElementById('gareStart');
+        const middle = document.getElementById('gareMiddle');
+        const end = document.getElementById('gareEnd');
+        data.gares.forEach(g => {
+            const o1 = document.createElement('option'); o1.value = g.id; o1.text = g.nom; start.add(o1);
+            const o2 = document.createElement('option'); o2.value = g.id; o2.text = g.nom; middle.add(o2);
+            const o3 = document.createElement('option'); o3.value = g.id; o3.text = g.nom; end.add(o3);
+        });
+
+        // ======= Fonction calcul temps =======
+        function calculateSchedule(trajetIds, trainSpeed, startTime) {
+            const tbody = document.querySelector('#tableSchedule tbody');
+            tbody.innerHTML = '';
+            let currentTime = startTime.split(':').map(Number);
+            let hours = currentTime[0], minutes = currentTime[1];
+
+            for (let i = 0; i < trajetIds.length - 1; i++) {
+                const gA = data.gares.find(g => g.id == trajetIds[i]);
+                const gB = data.gares.find(g => g.id == trajetIds[i + 1]);
+                const troncon = data.troncons.find(t =>
+                    (t.gareA == gA.id && t.gareB == gB.id) || (t.gareA == gB.id && t.gareB == gA.id)
+                );
+                if (troncon) {
+                    const speed = Math.min(troncon.vitesse_max, trainSpeed);
+                    const timeH = troncon.distance / speed;
+                    let minAdd = Math.floor(timeH * 60);
+                    hours += Math.floor(minAdd / 60);
+                    minutes += minAdd % 60;
+                    if (minutes >= 60) { hours += 1; minutes -= 60; }
+                    const timeStr = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${gB.nom}</td><td>${troncon.distance}</td><td>${troncon.vitesse_max}</td><td>${timeStr}</td>`;
+                    tbody.appendChild(tr);
+                }
+            }
+        }
+
+        // ======= Bouton Générer =======
+        document.getElementById('generate').addEventListener('click', () => {
+            const trainSpeed = Number(document.getElementById('trainSelect').value);
+            const startTime = document.getElementById('startTime').value;
+            const trajetIds = [Number(start.value)];
+            for (let option of middle.selectedOptions) trajetIds.push(Number(option.value));
+            trajetIds.push(Number(end.value));
+            calculateSchedule(trajetIds, trainSpeed, startTime);
+        });
+
+    </script>
+</body>
+
+</html>
