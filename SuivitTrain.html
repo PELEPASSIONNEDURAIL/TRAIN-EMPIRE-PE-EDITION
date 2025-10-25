@@ -233,5 +233,69 @@
 </body>
 <a href="index.html">⬅ Retour à l’accueil</a>
 <hr>
+<script type="module">
+    import { getTrains, listenTrains, getSillons, listenSillons, getLignes, listenLignes, getCollection, listenCollection } from "../js/data.js";
+
+    const listeTrains = document.getElementById("listeTrains");
+    const listeSillons = document.getElementById("listeSillons");
+    const listeLignes = document.getElementById("listeLignes");
+    const listeRames = document.getElementById("listeRames");
+
+    // Affichage trains
+    async function afficherTrains() {
+        const trains = await getTrains();
+        listeTrains.innerHTML = "";
+        trains.forEach(t => {
+            const li = document.createElement("li");
+            li.textContent = `${t.id} - ${t.nom} - ${t.type}`;
+            listeTrains.appendChild(li);
+        });
+    }
+
+    // Affichage sillons
+    async function afficherSillons() {
+        const sillons = await getSillons();
+        listeSillons.innerHTML = "";
+        sillons.forEach(s => {
+            const li = document.createElement("li");
+            li.textContent = `${s.id} - Ligne: ${s.ligne} - Horaire: ${s.horaire}`;
+            listeSillons.appendChild(li);
+        });
+    }
+
+    // Affichage lignes
+    async function afficherLignes() {
+        const lignes = await getLignes();
+        listeLignes.innerHTML = "";
+        lignes.forEach(l => {
+            const li = document.createElement("li");
+            li.textContent = `${l.id} - ${l.nom}`;
+            listeLignes.appendChild(li);
+        });
+    }
+
+    // Affichage rames
+    async function afficherRames() {
+        const rames = await getCollection("rames");
+        listeRames.innerHTML = "";
+        rames.forEach(r => {
+            const li = document.createElement("li");
+            li.textContent = `${r.id} - ${r.typeRame} - ${r.composition}`;
+            listeRames.appendChild(li);
+        });
+    }
+
+    // Listeners temps réel
+    listenTrains(() => afficherTrains());
+    listenSillons(() => afficherSillons());
+    listenLignes(() => afficherLignes());
+    listenCollection("rames", () => afficherRames());
+
+    // Affichage initial
+    afficherTrains();
+    afficherSillons();
+    afficherLignes();
+    afficherRames();
+</script>
 
 </html>
