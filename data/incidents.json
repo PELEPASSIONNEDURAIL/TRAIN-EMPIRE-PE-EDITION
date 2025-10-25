@@ -1,0 +1,56 @@
+[
+  {
+    "id": "1_Paris Gare de Lyon_Maison Alfort-Alfortville_perturbation_Panne de signalisation",
+    "nom": "Panne de signalisation",
+    "ligne": "1",
+    "garesImpactées": [
+      "Paris Gare de Lyon",
+      "Maison Alfort-Alfortville"
+    ],
+    "sens": [
+      "A→B",
+      "B→A"
+    ],
+    "type": "perturbation",
+    "vitesse": 30,
+    "debut": "12:00",
+    "fin": "13:00",
+    "color": "orange"
+  },
+  {
+    "id": "1_Paris Gare de Lyon_Maison Alfort-Alfortville_interruption_Accident de personne",
+    "nom": "Accident de personne",
+    "ligne": "1",
+    "garesImpactées": [
+      "Paris Gare de Lyon",
+      "Maison Alfort-Alfortville"
+    ],
+    "sens": [
+      "A→B",
+      "B→A"
+    ],
+    "type": "interruption",
+    "vitesse": null,
+    "debut": "13:00",
+    "fin": "17:00",
+    "color": "red"
+  },
+  {
+    "id": "1_Paris Gare de Lyon_Maison Alfort-Alfortville_travaux_Travaux RVB",
+    "nom": "Travaux RVB",
+    "ligne": "1",
+    "garesImpactées": [
+      "Paris Gare de Lyon",
+      "Maison Alfort-Alfortville"
+    ],
+    "sens": [
+      "A→B",
+      "B→A"
+    ],
+    "type": "travaux",
+    "vitesse": null,
+    "debut": "22:00",
+    "fin": "04:00",
+    "color": "blue"
+  }
+]

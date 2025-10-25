@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "nom": "52049",
+    "rameId": 1,
+    "sillonId": 1,
+    "departISO": "2025-10-12T10:43:00.000Z",
+    "arriveeISO": "2025-10-12T11:03:00.000Z",
+    "arriveeTheoriqueISO": "2025-10-12T11:03:00.000Z",
+    "dureeSec": 1207,
+    "retour": true,
+    "stopB": true,
+    "dwellMin": 15,
+    "createdAt": "2025-10-12T10:33:40.348Z"
+  }
+]

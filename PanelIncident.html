@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Train Empire — Panel Incident Réaliste</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 1rem;
+            position: relative;
+        }
+
+        /* Horloge Bodet TGV 750 */
+        #horloge {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 120px;
+            height: 120px;
+        }
+
+        #horloge img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: block;
+        }
+
+        /* Bandeaux incidents */
+        .panel {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            margin-bottom: 1.5rem;
+        }
+
+        .panel h2 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1rem;
+            color: #7dd3fc;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #cbd5e1;
+        }
+
+        select,
+        input[type="text"],
+        input[type="number"],
+        input[type="time"],
+        button {
+            width: 100%;
+            padding: 0.6rem;
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 1rem;
+            background: #334155;
+            color: #f1f5f9;
+            font-size: 1rem;
+        }
+
+        button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #38bdf8;
+            color: #0f172a;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #7dd3fc;
+        }
+
+        /* Liste incidents */
+        .incident-list {
+            display: grid;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .incident-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.8rem;
+            border-radius: 10px;
+            background: #334155;
+            border-left: 6px solid orange;
+            height: 50px;
+            transition: 0.2s;
+        }
+
+        .incident-item.red {
+            border-left: 6px solid red;
+        }
+
+        .incident-item.orange {
+            border-left: 6px solid orange;
+        }
+
+        .incident-item.blue {
+            border-left: 6px solid blue;
+        }
+
+        .incident-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .incident-details {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .icon {
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .icon img {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+            background: transparent;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Horloge Bodet TGV 750 -->
+    <div id="horloge">
+        <img src="Icones/BodetTGV750_base.png" alt="Cadran Bodet">
+        <img id="aiguille-heure" src="Icones/BodetTGV750_heure.png" alt="Aiguille heures">
+        <img id="aiguille-minute" src="Icones/BodetTGV750_minute.png" alt="Aiguille minutes">
+        <img id="aiguille-seconde" src="Icones/BodetTGV750_seconde.png" alt="Trotteuse">
+    </div>
+
+    <!-- Import JSON lignes -->
+    <div class="panel">
+        <h2>Importer les lignes</h2>
+        <input type="file" id="importJSON" accept=".json">
+    </div>
+
+    <!-- Formulaire incident -->
+    <div class="panel" id="incidentForm" style="display:none;">
+        <h2>Déclarer un incident</h2>
+
+        <label>Ligne :</label>
+        <select id="ligneSelect"></select>
+
+        <label>Gare A :</label>
+        <select id="gareASelect"></select>
+
+        <label>Gare B :</label>
+        <select id="gareBSelect"></select>
+
+        <label>Type :</label>
+        <select id="typeIncident">
+            <option value="perturbation">Perturbation 🟠</option>
+            <option value="interruption">Interruption 🔴</option>
+            <option value="travaux">Travaux 🛠️</option>
+        </select>
+
+        <label>Nom :</label>
+        <input type="text" id="nomIncident">
+
+        <label>Vitesse (km/h, obligatoire pour perturbation) :</label>
+        <input type="number" id="vitesseIncident" min="10">
+
+        <label>Heure de début :</label>
+        <input type="time" id="debutIncident">
+
+        <label>Heure de fin :</label>
+        <input type="time" id="finIncident">
+
+        <button id="addIncidentBtn">Ajouter l’incident</button>
+    </div>
+
+    <!-- Liste incidents -->
+    <div class="panel">
+        <h2>Liste des incidents</h2>
+        <div class="incident-list" id="incidentList"></div>
+        <button id="exportBtn">Exporter en JSON</button>
+    </div>
+
+    <script>
+        let data = null;
+        let incidents = [];
+
+        const importInput = document.getElementById("importJSON");
+        const ligneSelect = document.getElementById("ligneSelect");
+        const gareASelect = document.getElementById("gareASelect");
+        const gareBSelect = document.getElementById("gareBSelect");
+        const typeIncidentSelect = document.getElementById("typeIncident");
+        const incidentForm = document.getElementById("incidentForm");
+        const addIncidentBtn = document.getElementById("addIncidentBtn");
+        const incidentList = document.getElementById("incidentList");
+        const exportBtn = document.getElementById("exportBtn");
+
+        // Icônes locales mises à jour
+        const ICON_PERTURB = "Icones/Perturbation.gif";
+        const ICON_INTERRUP = "Icones/Interruption.png";
+        const ICON_TRAVAUX = "Icones/Travaux.png";
+
+        // Import JSON lignes
+        importInput.addEventListener("change", e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = event => {
+                data = JSON.parse(event.target.result);
+                populateLignes();
+                incidentForm.style.display = "block";
+            };
+            reader.readAsText(file);
+        });
+
+        // Populate lignes
+        function populateLignes() {
+            ligneSelect.innerHTML = "";
+            data.sillons.forEach(s => {
+                const gA = data.gares.find(g => g.id === s.gareA)?.nom || "???";
+                const gB = data.gares.find(g => g.id === s.gareB)?.nom || "???";
+                const opt = document.createElement("option");
+                opt.value = s.id;
+                opt.textContent = `${gA} ⇄ ${gB}`;
+                ligneSelect.appendChild(opt);
+            });
+            updateGares();
+        }
+        ligneSelect.addEventListener("change", updateGares);
+
+        // Populate gares
+        function updateGares() {
+            const sillon = data.sillons.find(s => s.id == ligneSelect.value);
+            if (!sillon) return;
+            gareASelect.innerHTML = "";
+            gareBSelect.innerHTML = "";
+            const gA = data.gares.find(g => g.id === sillon.gareA);
+            const gB = data.gares.find(g => g.id === sillon.gareB);
+            if (gA) gareASelect.appendChild(new Option(gA.nom, gA.id));
+            if (gB) gareBSelect.appendChild(new Option(gB.nom, gB.id));
+        }
+
+        // Ajouter incident
+        addIncidentBtn.addEventListener("click", () => {
+            const nom = document.getElementById("nomIncident").value.trim();
+            const vitesse = parseFloat(document.getElementById("vitesseIncident").value);
+            const type = typeIncidentSelect.value;
+            const ligne = ligneSelect.value;
+            const gA = gareASelect.options[gareASelect.selectedIndex].text;
+            const gB = gareBSelect.options[gareBSelect.selectedIndex].text;
+            const debut = document.getElementById("debutIncident").value;
+            const fin = document.getElementById("finIncident").value;
+
+            if (!nom) return alert("Nom requis !");
+            if (type === "perturbation" && !vitesse) return alert("Vitesse obligatoire !");
+            if (!debut || !fin) return alert("Heure de début et de fin requises !");
+
+            const color = (type === "interruption") ? "red" : (type === "travaux") ? "blue" : "orange";
+            const id = `${ligne}_${gA}_${gB}_${type}_${nom}`;
+
+            if (incidents.some(i => i.id === id)) return alert("Incident déjà existant !");
+
+            const incident = {
+                id,
+                nom,
+                ligne,
+                garesImpactées: [gA, gB],
+                sens: ["A→B", "B→A"],
+                type,
+                vitesse: type === "perturbation" ? vitesse : null,
+                debut,
+                fin,
+                color
+            };
+            incidents.push(incident);
+            renderIncidents();
+            document.getElementById("nomIncident").value = "";
+            document.getElementById("vitesseIncident").value = "";
+            document.getElementById("debutIncident").value = "";
+            document.getElementById("finIncident").value = "";
+        });
+
+        // Affichage incidents
+        function renderIncidents() {
+            incidentList.innerHTML = "";
+            incidents.forEach(i => {
+                let iconSrc;
+                if (i.type === "interruption") iconSrc = ICON_INTERRUP;
+                else if (i.type === "travaux") iconSrc = ICON_TRAVAUX;
+                else iconSrc = ICON_PERTURB;
+
+                const div = document.createElement("div");
+                div.className = `incident-item ${i.color}`;
+                div.innerHTML = `
+      <div>
+        <div class="incident-name">${i.nom} (${i.type})</div>
+        <div class="incident-details">
+          ${i.garesImpactées[0]} ⇄ ${i.garesImpactées[1]}${i.vitesse ? ` • ${i.vitesse} km/h` : ''} • ${i.debut} → ${i.fin}
+        </div>
+      </div>
+      <div class="icon">
+        <img src="${iconSrc}" alt="${i.type}">
+      </div>
+    `;
+                incidentList.appendChild(div);
+            });
+        }
+
+        // Export JSON
+        exportBtn.addEventListener("click", () => {
+            const blob = new Blob([JSON.stringify(incidents, null, 2)], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "incidents.json";
+            link.click();
+        });
+
+        // Horloge Bodet TGV 750 — rotation images
+        const h = document.getElementById("aiguille-heure");
+        const m = document.getElementById("aiguille-minute");
+        const s = document.getElementById("aiguille-seconde");
+
+        function updateBodet750() {
+            const now = new Date();
+            const hours = now.getHours() % 12 + now.getMinutes() / 60 + now.getSeconds() / 3600;
+            const minutes = now.getMinutes() + now.getSeconds() / 60;
+            const seconds = now.getSeconds() + now.getMilliseconds() / 1000;
+
+            h.style.transform = `rotate(${hours * 30}deg)`;
+            m.style.transform = `rotate(${minutes * 6}deg)`;
+            s.style.transform = `rotate(${seconds * 6}deg)`;
+
+            requestAnimationFrame(updateBodet750);
+        }
+        requestAnimationFrame(updateBodet750);
+    </script>
+
+</body>
+
+</html>

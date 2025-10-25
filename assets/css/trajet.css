@@ -1,0 +1,135 @@
+/* ===================== TRAJET.CSS ===================== */
+/* Thème sombre moderne pour la création / édition des trajets */
+
+body {
+    background-color: #111; /* fond noir profond */
+    color: #f0f0f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  header, footer {
+    background-color: #1a1a1a;
+    padding: 15px 20px;
+    text-align: center;
+    color: #f0f0f0;
+    border-bottom: 1px solid #333;
+  }
+  
+  footer {
+    border-top: 1px solid #333;
+    border-bottom: none;
+  }
+  
+  h1, h2 {
+    color: #f0f0f0;
+    margin-bottom: 10px;
+  }
+  
+  main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+  
+  section {
+    background-color: #1c1c1c;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #333;
+  }
+  
+  input[type="text"],
+  input[type="time"],
+  input[type="file"],
+  button {
+    padding: 8px 12px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: none;
+    font-size: 1rem;
+  }
+  
+  input[type="text"], input[type="time"] {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #222;
+    color: #f0f0f0;
+  }
+  
+  input[type="file"] {
+    background-color: #222;
+    color: #f0f0f0;
+  }
+  
+  button {
+    cursor: pointer;
+    background-color: #444;
+    color: #f0f0f0;
+    transition: all 0.2s;
+  }
+  
+  button:hover {
+    background-color: #666;
+    color: #fff;
+  }
+  
+  #list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 5px;
+  }
+  
+  .trajet-item {
+    padding: 10px;
+    background-color: #222;
+    border-left: 5px solid #555;
+    border-radius: 5px;
+    transition: all 0.2s;
+  }
+  
+  .trajet-item:hover {
+    border-left-color: #1e90ff;
+    background-color: #2a2a2a;
+  }
+  
+  label {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  
+  h2 {
+    border-bottom: 1px solid #333;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+  }
+  
+  form button {
+    margin-right: 10px;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #888;
+  }
+  

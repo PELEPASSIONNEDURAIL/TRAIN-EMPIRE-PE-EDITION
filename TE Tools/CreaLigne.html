@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Train Empire — Éditeur avancé de sillons & tronçons</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        :root {
+            --bg: #0f0f10;
+            --panel: #161617;
+            --muted: #222;
+            --accent: #bb86fc;
+            --accent2: #985eff;
+            --danger: #cf6679;
+            --text: #e6e6e6;
+            --thin: #333;
+            --fast: #4caf50;
+            --slow: #f44336;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, Arial, Helvetica, sans-serif;
+            margin: 18px;
+        }
+
+        h1 {
+            margin: 6px 0 12px 0;
+            color: #fff;
+        }
+
+        section {
+            background: var(--panel);
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+        }
+
+        label {
+            display: inline-block;
+            margin-right: 6px;
+            font-size: 0.95rem;
+        }
+
+        input,
+        select {
+            background: var(--muted);
+            border: 1px solid var(--thin);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin-right: 8px;
+        }
+
+        input[type="number"] {
+            width: 120px;
+        }
+
+        button {
+            background: var(--accent);
+            color: #111;
+            border: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        button:hover {
+            background: var(--accent2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.95rem;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--thin);
+            padding: 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background: var(--muted);
+            color: var(--text);
+        }
+
+        .small {
+            padding: 5px 8px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            background: #777;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .del {
+            background: var(--danger);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 6px;
+            border: none;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .note {
+            font-size: 0.9rem;
+            color: #bdbdbd;
+            margin-top: 6px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            background: var(--muted);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid var(--thin);
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .col {
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+        }
+
+        #dropArea {
+            border: 2px dashed #555;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        #dropArea.dragover {
+            border-color: #bb86fc;
+            color: #bb86fc;
+        }
+
+        .icon-troncon::before {
+            content: "🚆 ";
+        }
+
+        .highlight-fast {
+            background-color: var(--fast);
+            color: black;
+        }
+
+        .highlight-slow {
+            background-color: var(--slow);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Train Empire — Éditeur avancé de sillons & tronçons</h1>
+
+    <!-- 1. Gares -->
+    <section>
+        <h2>1) Gares</h2>
+        <div class="row">
+            <input id="inputNomGare" placeholder="Nom de la gare" />
+            <button id="btnAddGare">Ajouter</button>
+            <button id="btnClearAll" class="small">Vider tout</button>
+        </div>
+        <p class="note">Supprimer une gare supprime aussi les sillons liés.</p>
+        <table id="tblGares">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+
+    <!-- 2. Sillons existants -->
+    <section>
+        <h2>2) Sillons existants</h2>
+        <p class="note">Pour éviter doublons</p>
+        <table id="tblSillonsExist">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Départ</th>
+                    <th>Arrivée</th>
+                    <th>Distance (km)</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+
+    <!-- 3. Créer sillon -->
+    <section>
+        <h2>3) Créer un sillon</h2>
+        <div class="row">
+            <label>Gare A</label><select id="selGareA"></select>
+            <label>Gare B</label><select id="selGareB"></select>
+            <label>Distance (km)</label><input id="inputDistanceTot" type="number" step="0.1" min="0" />
+        </div>
+        <div class="row">
+            <label>Vitesse sortie Gare A</label><input id="inputVitesseA" type="number" min="0" />
+            <label>Vitesse arrivée Gare B</label><input id="inputVitesseB" type="number" min="0" />
+            <label>Limite sortie Gare A</label>
+            <select id="selLimiteType">
+                <option value="none">Aucune</option>
+                <option value="distance">Distance</option>
+                <option value="duration">Durée (s)</option>
+            </select>
+            <input id="inputLimiteVal" type="number" step="0.1" min="0" placeholder="valeur" />
+            <button id="btnCreateSillon">Créer</button>
+        </div>
+        <table id="tblSillons">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Départ</th>
+                    <th>Arrivée</th>
+                    <th>Distance</th>
+                    <th>Limite</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+
+    <!-- 4. Tronçons -->
+    <section>
+        <h2>4) Tronçons</h2>
+        <div class="row">
+            <label>Sillon</label><select id="selSillon"></select>
+            <label>Nom tronçon</label><input id="inputNomTr" />
+            <label>Début (km)</label><input id="inputDeTr" type="number" step="0.1" />
+            <label>Fin (km)</label><input id="inputATr" type="number" step="0.1" />
+            <label>Vitesse</label><input id="inputVitTr" type="number" />
+            <button id="btnAddTr">Ajouter</button>
+        </div>
+        <p class="note">Les tronçons sont **entre les gares**, modifiables à tout moment.</p>
+        <table id="tblTroncons">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nom</th>
+                    <th>Début</th>
+                    <th>Fin</th>
+                    <th>Distance</th>
+                    <th>Vitesse</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+
+    <!-- 5. JSON -->
+    <section>
+        <h2>5) JSON</h2>
+        <div class="row">
+            <button id="btnExport">Télécharger</button>
+            <button id="btnCopy" class="small">Copier</button>
+            <button id="btnLoadFile" class="small">Charger fichier</button>
+            <input type="file" id="fileInput" style="display:none" />
+            <button id="btnShowJSON" class="small">Afficher JSON</button>
+        </div>
+        <textarea id="txtJSON" style="display:none"></textarea>
+        <div id="dropArea">Glisser-déposer JSON ici</div>
+    </section>
+
+    <script>
+        /* ===== DATA ===== */
+        let gares = [], sillons = [];
+        let history = [], historyIndex = -1;
+
+        const $ = id => document.getElementById(id);
+
+        function uid(list) { return list.length ? Math.max(...list.map(x => x.id)) + 1 : 1; }
+        function findGareName(id) { const g = gares.find(x => x.id === id); return g ? g.nom : '#' + id; }
+
+        /* ===== UI Refs ===== */
+        const inputNomGare = $('inputNomGare'), btnAddGare = $('btnAddGare'), btnClearAll = $('btnClearAll'), tblGaresBody = document.querySelector('#tblGares tbody');
+        const selGareA = $('selGareA'), selGareB = $('selGareB'), inputDistanceTot = $('inputDistanceTot'), inputVitesseA = $('inputVitesseA'), inputVitesseB = $('inputVitesseB');
+        const selLimiteType = $('selLimiteType'), inputLimiteVal = $('inputLimiteVal'), btnCreateSillon = $('btnCreateSillon');
+        const tblSillonsBody = $('tblSillons tbody'), tblSillonsExistBody = document.querySelector('#tblSillonsExist tbody'), selSillon = $('selSillon');
+        const inputNomTr = $('inputNomTr'), inputDeTr = $('inputDeTr'), inputATr = $('inputATr'), inputVitTr = $('inputVitTr'), btnAddTr = $('btnAddTr');
+        const tblTronconsBody = $('tblTroncons tbody');
+        const btnExport = $('btnExport'), btnCopy = $('btnCopy'), btnLoadFile = $('btnLoadFile'), fileInput = $('fileInput');
+        const btnShowJSON = $('btnShowJSON'), txtJSON = $('txtJSON');
+        const dropArea = $('dropArea');
+
+        /* ===== RENDER FUNCTIONS ===== */
+        function renderGares() {
+            tblGaresBody.innerHTML = '';
+            gares.forEach(g => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${g.id}</td><td>${g.nom}</td><td><button class="small del" onclick="delGare(${g.id})">Supprimer</button></td>`;
+                tblGaresBody.appendChild(tr);
+            });
+            refreshGareSelects();
+        }
+
+        function refreshGareSelects() {
+            [selGareA, selGareB].forEach(s => {
+                s.innerHTML = '<option value="">--Sélection--</option>';
+                gares.forEach(g => s.innerHTML += `<option value="${g.id}">${g.nom}</option>`);
+            });
+            selSillon.innerHTML = '<option value="">--Sélection--</option>';
+            sillons.forEach(s => selSillon.innerHTML += `<option value="${s.id}">#${s.id} : ${findGareName(s.gareA)} → ${findGareName(s.gareB)}</option>`);
+        }
+
+        function renderSillons() {
+            tblSillonsBody.innerHTML = '';
+            sillons.forEach(s => {
+                const lim = s.limiteSortieA ? s.limiteSortieA.value + ' (' + s.limiteSortieA.type + ')' : '-';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${s.id}</td><td>${findGareName(s.gareA)}</td><td>${findGareName(s.gareB)}</td><td>${s.distanceTotale}</td><td>${lim}</td>
+    <td><button class="small del" onclick="delSillon(${s.id})">Supprimer</button></td>`;
+                tblSillonsBody.appendChild(tr);
+            });
+            renderSillonsExist();
+        }
+
+        function renderSillonsExist() {
+            tblSillonsExistBody.innerHTML = '';
+            sillons.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${s.id}</td><td>${findGareName(s.gareA)}</td><td>${findGareName(s.gareB)}</td><td>${s.distanceTotale}</td>`;
+                tblSillonsExistBody.appendChild(tr);
+            });
+        }
+
+        function renderTroncons(sid) {
+            const s = sillons.find(x => x.id == sid);
+            if (!s) { tblTronconsBody.innerHTML = ''; return; }
+            tblTronconsBody.innerHTML = '';
+            let maxV = Math.max(...s.troncons.map(t => t.vitesse));
+            let minV = Math.min(...s.troncons.map(t => t.vitesse));
+            s.troncons.forEach((t, i) => {
+                const dist = (t.a - t.de).toFixed(1);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${i + 1}</td>
+                    <td class="icon-troncon">${t.nom}</td>
+                    <td>${t.de}</td>
+                    <td>${t.a}</td>
+                    <td>${dist}</td>
+                    <td class="${t.vitesse === maxV ? 'highlight-fast' : t.vitesse === minV ? 'highlight-slow' : ''}">${t.vitesse}</td>
+                    <td>${t.type}</td>
+                    <td><button class="small del" onclick="delTroncon(${s.id},${t.id})">Supprimer</button></td>`;
+                tblTronconsBody.appendChild(tr);
+            });
+        }
+
+        /* ===== ACTIONS ===== */
+        btnAddGare.onclick = () => {
+            const nom = inputNomGare.value.trim();
+            if (!nom) return alert('Nom vide');
+            if (gares.find(g => g.nom.toLowerCase() === nom.toLowerCase())) return alert('Gare existante');
+            gares.push({ id: uid(gares), nom });
+            inputNomGare.value = '';
+            renderGares();
+        };
+
+        window.delGare = id => {
+            if (confirm('Supprimer ?')) {
+                gares = gares.filter(g => g.id !== id);
+                sillons = sillons.filter(s => s.gareA !== id && s.gareB !== id);
+                renderGares(); renderSillons();
+            }
+        };
+
+        btnClearAll.onclick = () => { if (confirm('Tout vider ?')) { gares = []; sillons = []; renderGares(); renderSillons(); } };
+
+        btnCreateSillon.onclick = () => {
+            const a = +selGareA.value, b = +selGareB.value, d = +inputDistanceTot.value, va = +inputVitesseA.value, vb = +inputVitesseB.value;
+            const limT = selLimiteType.value, limV = +inputLimiteVal.value;
+            if (!a || !b || a === b) return alert('Gares invalides');
+            if (d <= 0) return alert('Distance >0');
+            if (sillons.find(s => s.gareA === a && s.gareB === b)) return alert('Sillon existant');
+            const trons = [
+                { id: uid([]), nom: findGareName(a), de: 0, a: 0, vitesse: va, type: 'gare' },
+                { id: uid([]), nom: findGareName(b), de: d, a: d, vitesse: vb, type: 'gare' }
+            ];
+            const sillon = { id: uid(sillons), gareA: a, gareB: b, distanceTotale: d, troncons: trons };
+            if (limT !== 'none') sillon.limiteSortieA = { type: limT, value: limV };
+            sillons.push(sillon);
+            renderSillons();
+        };
+
+        selSillon.onchange = () => renderTroncons(selSillon.value);
+
+        btnAddTr.onclick = () => {
+            const sid = +selSillon.value;
+            if (!sid) return alert('Sélectionner sillon');
+            const s = sillons.find(x => x.id == sid);
+            if (!s) return;
+            const nom = inputNomTr.value.trim(), de = +inputDeTr.value, a = +inputATr.value, vit = +inputVitTr.value;
+            if (!nom || de >= a) return alert('Valeurs tronçon invalides');
+            s.troncons.push({ id: uid(s.troncons), nom, de, a, vitesse: vit, type: 'inter' });
+            renderTroncons(sid);
+        };
+
+        window.delTroncon = (sid, tid) => {
+            const s = sillons.find(x => x.id == sid); if (!s) return;
+            s.troncons = s.troncons.filter(t => t.id !== tid); renderTroncons(sid);
+        };
+
+        /* ===== JSON ===== */
+        btnExport.onclick = () => {
+            const blob = new Blob([JSON.stringify({ gares, sillons }, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'train_empire_pe.json'; a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        btnCopy.onclick = () => { navigator.clipboard.writeText(JSON.stringify({ gares, sillons }, null, 2)); alert('JSON copié'); };
+
+        btnLoadFile.onclick = () => fileInput.click();
+
+        fileInput.onchange = e => {
+            const f = e.target.files[0]; if (!f) return;
+            const r = new FileReader();
+            r.onload = ev => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (data.gares) gares = data.gares;
+                    if (data.sillons) sillons = data.sillons;
+                    renderGares(); renderSillons(); alert('JSON chargé');
+                } catch (err) { alert('Erreur JSON'); }
+            };
+            r.readAsText(f);
+        };
+
+        btnShowJSON.onclick = () => { txtJSON.style.display = 'block'; txtJSON.value = JSON.stringify({ gares, sillons }, null, 2); };
+
+        /* ===== DROP ===== */
+        dropArea.ondragover = e => { e.preventDefault(); dropArea.classList.add('dragover'); };
+        dropArea.ondragleave = e => { dropArea.classList.remove('dragover'); };
+        dropArea.ondrop = e => {
+            e.preventDefault(); dropArea.classList.remove('dragover');
+            const f = e.dataTransfer.files[0];
+            if (f) {
+                const r = new FileReader();
+                r.onload = ev => {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        if (data.gares) gares = data.gares;
+                        if (data.sillons) sillons = data.sillons;
+                        renderGares(); renderSillons(); alert('JSON chargé');
+                    } catch (err) { alert('Erreur JSON'); }
+                };
+                r.readAsText(f);
+            }
+        };
+    </script>
+    <div id="sncfClockWrapper">
+        <canvas id="sncfClock" width="150" height="150"></canvas>
+    </div>
+
+    <style>
+        #sncfClockWrapper {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            background: black;
+            border-radius: 50%;
+            padding: 6px;
+            box-shadow: 0 0 8px rgba(255, 255, 0, 0.8);
+        }
+
+        #sncfClock {
+            display: block;
+            background: black;
+            border-radius: 50%;
+        }
+    </style>
+
+    <script>
+        const canvas = document.getElementById('sncfClock');
+        const ctx = canvas.getContext('2d');
+        const radius = canvas.width / 2;
+        ctx.translate(radius, radius);
+
+        function drawClock() {
+            const now = new Date();
+            drawFace(ctx, radius);
+            drawNumbers(ctx, radius);
+            drawTime(ctx, radius, now);
+            requestAnimationFrame(drawClock);
+        }
+
+        function drawFace(ctx, radius) {
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = 'black';
+            ctx.fill();
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = radius * 0.05;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.05, 0, 2 * Math.PI);
+            ctx.fillStyle = 'yellow';
+            ctx.fill();
+        }
+
+        function drawNumbers(ctx, radius) {
+            ctx.font = radius * 0.15 + "px Arial";
+            ctx.fillStyle = 'yellow';
+            ctx.textBaseline = "middle";
+            ctx.textAlign = "center";
+            for (let num = 1; num <= 12; num++) {
+                const ang = num * Math.PI / 6;
+                ctx.rotate(ang);
+                ctx.translate(0, -radius * 0.85);
+                ctx.rotate(-ang);
+                ctx.fillText(num.toString(), 0, 0);
+                ctx.rotate(ang);
+                ctx.translate(0, radius * 0.85);
+                ctx.rotate(-ang);
+            }
+        }
+
+        function drawTime(ctx, radius, now) {
+            let hour = now.getHours() % 12;
+            let minute = now.getMinutes();
+            let second = now.getSeconds() + now.getMilliseconds() / 1000;
+            hour += minute / 60 + second / 3600;
+            minute += second / 60;
+            drawHand(ctx, hour * Math.PI / 6, radius * 0.5, radius * 0.07);
+            drawHand(ctx, minute * Math.PI / 30, radius * 0.75, radius * 0.05);
+            drawHand(ctx, second * Math.PI / 30, radius * 0.85, radius * 0.02, 'yellow');
+        }
+
+        function drawHand(ctx, pos, length, width, color = 'yellow') {
+            ctx.beginPath();
+            ctx.lineWidth = width;
+            ctx.lineCap = "round";
+            ctx.strokeStyle = color;
+            ctx.moveTo(0, 0);
+            ctx.rotate(pos);
+            ctx.lineTo(0, -length);
+            ctx.stroke();
+            ctx.rotate(-pos);
+        }
+
+        drawClock();
+    </script>
+
+</body>
+
+</html>

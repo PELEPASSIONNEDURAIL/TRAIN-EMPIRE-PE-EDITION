@@ -1,0 +1,132 @@
+/* ===== Global Body ===== */
+body {
+    background-color: #111;
+    color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px;
+    margin: 0;
+  }
+  
+  /* ===== Titres ===== */
+  h1, h2 {
+    color: #fff;
+    margin-bottom: 15px;
+  }
+  
+  /* ===== Formulaire ===== */
+  form {
+    background-color: #222;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    box-shadow: 0 0 10px #000;
+  }
+  
+  label {
+    display: block;
+    margin-top: 12px;
+    font-weight: 500;
+    color: #ddd;
+  }
+  
+  input, select {
+    margin-top: 5px;
+    padding: 7px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background-color: #1b1b1b;
+    color: #eee;
+    width: 230px;
+    font-size: 14px;
+  }
+  
+  select[multiple] {
+    height: 80px;
+  }
+  
+  button[type="submit"] {
+    background-color: #1e90ff;
+    color: #fff;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-top: 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  button[type="submit"]:hover {
+    background-color: #1c7cd6;
+  }
+  
+  /* ===== Parc matériel ===== */
+  #materielContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .materiel-item {
+    background-color: #222;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 200px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .materiel-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  }
+  
+  .materiel-item img {
+    height: auto;
+    width: auto;
+    border: 1px solid #555;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .materiel-info {
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.4;
+    color: #ccc;
+    margin-bottom: 8px;
+  }
+  
+  /* ===== Bouton supprimer ===== */
+  .materiel-item button {
+    background-color: #ff4d4d;
+    font-size: 12px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #fff;
+    transition: background 0.3s ease;
+  }
+  
+  .materiel-item button:hover {
+    background-color: #e03a3a;
+  }
+  
+  /* ===== Responsive ===== */
+  @media screen and (max-width: 600px) {
+    form input, form select {
+      width: 100%;
+    }
+  
+    #materielContainer {
+      justify-content: center;
+    }
+  
+    .materiel-item {
+      width: 90%;
+    }
+  }
+  

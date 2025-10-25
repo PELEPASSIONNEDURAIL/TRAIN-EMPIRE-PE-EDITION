@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>TRAIN EMPIRE — PE Edition</title>
+    <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="assets/css/index.css">
+    <style>
+        :root {
+            --bg: #0b0b0c;
+            --panel: #111;
+            --muted: #bdbdbd;
+            --accent: #1e90ff;
+            --danger: #ff4d4d;
+        }
+
+        body {
+            background: var(--bg);
+            color: #eee;
+            font-family: Inter, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.4rem;
+        }
+
+        nav a {
+            color: #ddd;
+            text-decoration: none;
+            margin-left: 15px;
+            font-weight: 500;
+        }
+
+        nav a.active {
+            color: var(--accent);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 10px;
+        }
+
+        section.panel {
+            background: var(--panel);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            border: 1px solid #222;
+            padding: 6px;
+            text-align: center;
+        }
+
+        .train-card {
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .train-image {
+            display: flex;
+            align-items: flex-end;
+            height: 80px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .train-image img {
+            height: 100%;
+            margin-right: 3px;
+        }
+
+        .train-info {
+            flex: 1;
+        }
+
+        .train-info h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--accent);
+        }
+
+        .train-info p {
+            margin: 4px 0;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background: #111;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>🚆 TRAIN <span style="color:var(--accent)">EMPIRE</span> <small>PE Edition</small></h1>
+        <nav>
+            <a href="index.html" class="active">Accueil</a>
+            <a href="create_rame.html">Créer rame</a>
+            <a href="create_trajet.html">Créer trajet</a>
+            <a href="create_ligne.html">Lignes</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Tableau des trains en circulation -->
+        <section class="panel">
+            <h2>🚂 Trains en circulation</h2>
+            <div id="train-list">
+                <!-- Les trains actifs seront injectés ici -->
+            </div>
+        </section>
+
+        <!-- Stats -->
+        <section class="panel">
+            <h2>📊 Statistiques globales</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fret total</th>
+                        <th>Voyageurs</th>
+                        <th>Trains actifs</th>
+                        <th>Incidents</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td id="stat-fret">0 t</td>
+                        <td id="stat-voyageurs">0</td>
+                        <td id="stat-trains">0</td>
+                        <td id="stat-incidents">0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        © 2025 PE — TRAIN EMPIRE PE Edition
+    </footer>
+
+    <script>
+        // Chargement des données sauvegardées
+        const rames = JSON.parse(localStorage.getItem('ramesExistantes')) || [];
+        const trajets = JSON.parse(localStorage.getItem('trajetsExistants')) || [];
+
+        const trainList = document.getElementById('train-list');
+        const statTrains = document.getElementById('stat-trains');
+
+        function renderTrains() {
+            trainList.innerHTML = '';
+            if (trajets.length === 0) {
+                trainList.innerHTML = '<p>Aucun train en circulation</p>';
+                statTrains.textContent = '0';
+                return;
+            }
+
+            trajets.forEach(trajet => {
+                // On ne prend que gare départ et arrivée
+                const depart = trajet.ligne ? trajet.ligne.gareDepart : 'N/A';
+                const arrivee = trajet.ligne ? trajet.ligne.gareArrivee : 'N/A';
+                const heureDepart = trajet.horaireDepart || '--:--';
+
+                const rame = trajet.rame || {};
+                const rameImgs = (rame.engins || []).map(e => `<img src="${e.image}" alt="${e.nom}">`).join('');
+
+                const card = document.createElement('div');
+                card.className = 'train-card';
+                card.innerHTML = `
+          <div class="train-image">${rameImgs}</div>
+          <div class="train-info">
+            <h3>${trajet.nom || 'Train sans nom'}</h3>
+            <p>🕒 Départ prévu : ${heureDepart}</p>
+            <p>🚉 ${depart} ➡️ ${arrivee}</p>
+          </div>
+        `;
+                trainList.appendChild(card);
+            });
+
+            statTrains.textContent = trajets.length.toString();
+        }
+
+        renderTrains();
+    </script>
+
+    <!-- Scripts externes -->
+    <script src="js/storage.js"></script>
+    <script src="js/rame.js"></script>
+    <script src="js/trajet.js"></script>
+    <script src="js/ligne.js"></script>
+    <script src="js/traffic.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

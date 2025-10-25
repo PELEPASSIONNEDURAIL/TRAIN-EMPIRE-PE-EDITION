@@ -1,0 +1,33 @@
+TRAIN_EMPIRE_PE_EDITION/
+│
+├─ index.html                  → page d’accueil : trafic en temps réel, stats fret/voyageurs, incidents
+├─ create_rame.html            → création / édition des rames
+├─ create_trajet.html          → création / édition des trajets
+├─ create_ligne.html           → import / gestion des lignes (via CSV)
+│
+├─ /assets
+│   ├─ /img/
+│   │     ├─ ui/               → icônes interface (retard, incident…)
+│   │     └─ trains/           → images importées par le joueur (locos, wagons, rames, livrées…)
+│   └─ /css/
+│         ├─ global.css        → styles communs à toutes les pages
+│         ├─ index.css         → styles spécifiques à l’accueil
+│         ├─ rame.css          → styles spécifiques création de rames
+│         ├─ trajet.css        → styles spécifiques création de trajets
+│         └─ ligne.css         → styles spécifiques création de lignes
+│
+├─ /js/
+│     ├─ main.js               → logique globale (navigation, couleurs, helpers…)
+│     ├─ storage.js            → gestion LocalStorage (sauvegardes illimitées, à vie)
+│     ├─ csv.js                → import / export CSV (lignes, trajets…)
+│     ├─ incidents.js          → génération et gestion des perturbations
+│     ├─ traffic.js            → calculs de circulation (vitesses, horaires, retards…)
+│     ├─ ligne.js              → logique d’import et gestion des lignes
+│     ├─ rame.js               → logique de création de rames (ajout wagons, longueur max 750m…)
+│     └─ trajet.js             → logique de création de trajets (fusion sections, arrêts/passages…)
+│
+└─ /data/                      → fichiers utilisateur (exemple de démo)
+      ├─ lignes.csv            → import des lignes : Gare départ / Gare arrivée / Distance / Vitesse / Électrifié / Thermique / Note
+      ├─ trajets.csv           → import des trajets : Nom rame / Gare départ / Heure départ / Gare arrivée / Heure arrivée / Arrêt / Passage / Type
+      ├─ materiel.csv          → base matériel : nom engin / tensions / vitesse / puissance / capacité…
+      └─ rames.json            → rames créées par le joueur (sauvegardé en localStorage mais export possible)

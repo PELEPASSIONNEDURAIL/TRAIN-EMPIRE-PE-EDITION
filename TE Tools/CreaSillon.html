@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Train Empire — Créateur de trajets (temps-distance)</title>
+    <style>
+        :root {
+            --bg: #0b0b0b;
+            --panel: #121213;
+            --muted: #1b1b1c;
+            --accent: #7c4dff;
+            --accent-2: #5a2be6;
+            --text: #e6e6e6;
+            --muted-text: #bfbfbf;
+            --danger: #cf6679;
+            --blue: #36a3ff;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, Segoe UI, Arial, Helvetica, sans-serif;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 18px auto;
+            padding: 18px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.45rem;
+        }
+
+        section {
+            background: var(--panel);
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+        }
+
+        label {
+            display: inline-block;
+            font-size: 0.95rem;
+            color: var(--muted-text);
+            margin-right: 8px;
+        }
+
+        input,
+        select,
+        button {
+            background: var(--muted);
+            color: var(--text);
+            border: 1px solid #2b2b2b;
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        input[type="file"] {
+            padding: 6px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        button.primary {
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            color: #071018;
+            font-weight: 700;
+            border: none;
+        }
+
+        button.ghost {
+            background: transparent;
+            border: 1px solid #2b2b2b;
+        }
+
+        button.danger {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+
+        th,
+        td {
+            border: 1px solid #222;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background: #131315;
+            color: var(--muted-text);
+        }
+
+        .small {
+            padding: 6px 8px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+
+        .note {
+            color: var(--muted-text);
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        .blue {
+            color: var(--blue);
+            font-weight: 700;
+        }
+
+        .panel-left {
+            width: 48%;
+        }
+
+        .panel-right {
+            width: 48%;
+        }
+
+        .flex-2 {
+            display: flex;
+            gap: 12px;
+        }
+
+        .split {
+            display: flex;
+            gap: 12px;
+        }
+
+        .canvas-wrap {
+            background: #0b0b0b;
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        #tdPlot {
+            width: 100%;
+            height: 360px;
+            background: #0b0b0b;
+        }
+
+        .muted {
+            color: var(--muted-text);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width:980px) {
+
+            .panel-left,
+            .panel-right {
+                width: 100%
+            }
+
+            .split {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <h1>Train Empire — Créateur de trajets</h1>
+            <div class="muted">Importer JSON → créer / éditer trajets → export</div>
+        </header>
+
+        <!-- IMPORT -->
+        <section>
+            <h2>1) Importer / Pré-charger JSON</h2>
+            <div class="row">
+                <label>JSON Rames :</label>
+                <input id="fileRames" type="file" accept=".json,application/json" />
+                <label>JSON Gares & Sillons :</label>
+                <input id="fileSillons" type="file" accept=".json,application/json" />
+                <button id="btnLoadDefaults" class="small primary">Charger exemples mémorisés</button>
+                <button id="btnClearAll" class="small ghost">Réinitialiser données</button>
+            </div>
+            <p class="note">Tu peux importer tes fichiers JSON (rames et gares/sillons). Les données par défaut sont
+                chargées si tu cliques sur "Charger exemples".</p>
+        </section>
+
+        <div class="split">
+            <!-- CREATION -->
+            <section class="panel-left">
+                <h2>2) Créer un trajet</h2>
+
+                <div class="row">
+                    <label>Nom du trajet :</label>
+                    <input id="inputNomTrajet" placeholder="Ex : 159 Paris-Lyon 08:00" style="min-width:260px" />
+                </div>
+
+                <div class="row">
+                    <label>Choisir la rame :</label>
+                    <select id="selRame"></select>
+
+                    <label>Choisir le sillon :</label>
+                    <select id="selSillon"></select>
+                </div>
+
+                <div class="row">
+                    <label>Départ (date & heure) :</label>
+                    <input id="inputDepart" type="datetime-local" />
+                    <label>Temps d'attente à Gare B (min)</label>
+                    <input id="inputDwell" type="number" value="0" min="0" style="width:110px;" />
+                </div>
+
+                <div class="row">
+                    <label>Arrêt en gare B ?</label>
+                    <select id="selStopB">
+                        <option value="true">Oui</option>
+                        <option value="false">Non</option>
+                    </select>
+
+                    <label>Trajet retour ?</label>
+                    <select id="selRetour">
+                        <option value="false">Non</option>
+                        <option value="true">Oui</option>
+                    </select>
+                </div>
+
+                <div class="row" style="margin-top:10px;">
+                    <button id="btnCreate" class="primary">Créer trajet (calculer horaire)</button>
+                    <button id="btnCreateAndGo" class="small">Créer & sélectionner</button>
+                </div>
+
+                <p class="note">Calcul horaire = somme(des tronçons) : durée(segment)/v_eff (v_eff = min(v_tronçon,
+                    v_rame)).</p>
+
+                <hr style="border:none;height:8px" />
+
+                <h3>Horaire calculé</h3>
+                <div class="row">
+                    <label>Heure d'arrivée minimale (theorique) :</label>
+                    <div id="theoArrival" class="blue">—</div>
+                </div>
+
+                <div class="row">
+                    <label>Si tu veux, tu peux modifier l'heure d'arrivée :</label>
+                    <input id="inputArrivee" type="datetime-local" />
+                    <button id="btnApplyArr" class="small">Appliquer</button>
+                </div>
+
+                <p class="note">L'heure théorique affichée est la <strong>plus petite</strong> heure d'arrivée possible
+                    (arrivée minimale). Tu peux l'ajuster manuellement.</p>
+            </section>
+
+            <!-- TABLES & VIS -->
+            <section class="panel-right">
+                <h2>3) Trajets enregistrés & visualisation</h2>
+
+                <div class="row">
+                    <button id="btnExportTrajets" class="small primary">Exporter trajets (JSON)</button>
+                    <button id="btnLoadTrajets" class="small ghost">Importer trajets (JSON)</button>
+                    <button id="btnClearTrajets" class="small danger">Effacer trajets</button>
+                </div>
+
+                <h3 style="margin-top:10px">Tableau des trajets (par rame)</h3>
+                <div style="max-height:260px; overflow:auto;">
+                    <table id="tblTrajets">
+                        <thead>
+                            <tr>
+                                <th style="width:60px">ID</th>
+                                <th>Nom</th>
+                                <th>Rame</th>
+                                <th>Sillon</th>
+                                <th>Départ</th>
+                                <th>Arrivée (actuelle)</th>
+                                <th>Théorique</th>
+                                <th>Retour</th>
+                                <th>Stop B</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin-top:12px">Diagramme temps-distance (aperçu)</h3>
+                <div class="canvas-wrap">
+                    <canvas id="tdPlot" width="860" height="360"></canvas>
+                </div>
+                <p class="note">Chaque ligne = trajet. Axe horizontal = temps, axe vertical = distance (km). L'arrivée
+                    théorique minimale est indiquée en bleu sur la fiche.</p>
+            </section>
+        </div>
+
+        <section>
+            <h2>4) Données en mémoire (aperçu JSON)</h2>
+            <div class="row">
+                <button id="btnShowData" class="small">Afficher JSON gares/sillons</button>
+                <button id="btnShowRames" class="small">Afficher JSON rames</button>
+            </div>
+            <pre id="preData"
+                style="background:var(--muted); color:var(--text); padding:12px; border-radius:8px; max-height:260px; overflow:auto; display:none;"></pre>
+        </section>
+    </div>
+
+    <script>
+        /* ============================
+           Données par défaut (mémoire)
+           ============================ */
+
+        /* JSON gares / sillons (tel que fourni) */
+        let dataSillonsGares = {
+            "gares": [
+                { "id": 1, "nom": "Paris Gare de Lyon" },
+                { "id": 2, "nom": "Maison Alfort-Alfortville" }
+            ],
+            "sillons": [
+                {
+                    "id": 1,
+                    "gareA": 1,
+                    "gareB": 2,
+                    "distanceTotale": 6.2,
+                    "limiteSortieA": { "type": "distance", "value": 1 },
+                    "troncons": [
+                        { "id": 1, "nom": "Paris Gare de Lyon", "de": 0, "a": 1, "vitesse": 30, "type": "gare" },
+                        { "id": 3, "nom": "PLM1", "de": 1, "a": 2.1, "vitesse": 100, "type": "inter" },
+                        { "id": 4, "nom": "PLM2", "de": 2.1, "a": 4, "vitesse": 115, "type": "inter" },
+                        { "id": 2, "nom": "Maison Alfort-Alfortville", "de": 4, "a": 6.2, "vitesse": 135, "type": "gare" }
+                    ]
+                }
+            ]
+        };
+
+        /* JSON rames (array) - version fournie */
+        let dataRames = [
+            {
+                "id": 1,
+                "nom": "TEST",
+                "longueur": 744.6000000000006,
+                "vitesse": 100,
+                "masse": "3690 tonnes",
+                "composition": [
+                    {
+                        "id": 1,
+                        "nom": "EBS BR 159",
+                        "vitesseMax": 150,
+                        "categorie": "Locomotive",
+                        "energie": "Electrique",
+                        "capaciteVoyageurs": 0,
+                        "capaciteFretT": 0,
+                        "longueur": 23,
+                        "image": ""
+                    },
+                    {
+                        "id": 2,
+                        "nom": "Zags TN",
+                        "vitesseMax": 100,
+                        "categorie": "Wagon",
+                        "energie": null,
+                        "capaciteVoyageurs": 0,
+                        "capaciteFretT": 90,
+                        "longueur": 17.6,
+                        "image": ""
+                    }
+                ]
+            }
+        ];
+
+        /* Trajets en mémoire */
+        let trajets = []; // {id, nom, rameId, sillonId, departISO, arriveeISO (modifiable), arriveeTheoriqueISO, dureeSec, retour, stopB, dwellMin}
+
+        /* Utilitaires */
+        const $ = id => document.getElementById(id);
+        function uid(list) { return list.length ? Math.max(...list.map(x => x.id)) + 1 : 1; }
+        function formatDateISOToLocalInput(dtIso) {
+            if (!dtIso) return '';
+            const d = new Date(dtIso);
+            // to local datetime-local value yyyy-MM-ddTHH:mm
+            const pad = n => n.toString().padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+        function toISOWithoutSeconds(d) { // round to minute
+            const copy = new Date(d.getTime()); copy.setSeconds(0, 0); return copy.toISOString();
+        }
+        function formatDateShort(dtIso) {
+            if (!dtIso) return '—';
+            const d = new Date(dtIso);
+            return d.toLocaleString();
+        }
+
+        /* Chargement initial UI */
+        function populateSelectors() {
+            // rames: display name + id
+            const selRame = $('selRame');
+            selRame.innerHTML = '';
+            dataRames.forEach(r => {
+                const opt = document.createElement('option'); opt.value = r.id; opt.text = `${r.id} - ${r.nom}`; selRame.appendChild(opt);
+            });
+            // sillons
+            const selSillon = $('selSillon');
+            selSillon.innerHTML = '';
+            (dataSillonsGares.sillons || []).forEach(s => {
+                const gareA = findGareName(s.gareA), gareB = findGareName(s.gareB);
+                const opt = document.createElement('option'); opt.value = s.id; opt.text = `${s.id} - ${gareA} → ${gareB} (${s.distanceTotale} km)`; selSillon.appendChild(opt);
+            });
+        }
+        function findGareName(id) {
+            const g = (dataSillonsGares.gares || []).find(x => x.id === id); return g ? g.nom : `#${id}`;
+        }
+        populateSelectors();
+
+        /* Event listeners import files */
+        $('fileRames').addEventListener('change', e => {
+            const f = e.target.files[0];
+            if (!f) return;
+            const r = new FileReader();
+            r.onload = ev => {
+                try { const parsed = JSON.parse(ev.target.result); dataRames = parsed; populateSelectors(); alert('Rames importées.'); }
+                catch (err) { alert('JSON rames invalide'); }
+            };
+            r.readAsText(f);
+        });
+        $('fileSillons').addEventListener('change', e => {
+            const f = e.target.files[0]; if (!f) return;
+            const r = new FileReader();
+            r.onload = ev => {
+                try { const parsed = JSON.parse(ev.target.result); dataSillonsGares = parsed; populateSelectors(); alert('Sillons/Gares importés.'); }
+                catch (err) { alert('JSON sillons invalide'); }
+            };
+            r.readAsText(f);
+        });
+
+        /* Buttons */
+        $('btnLoadDefaults').addEventListener('click', () => { // reload defaults from memory variables above
+            dataSillonsGares = dataSillonsGares; // already present
+            dataRames = dataRames;
+            populateSelectors();
+            alert('Exemples chargés en mémoire.');
+        });
+        $('btnClearAll').addEventListener('click', () => { if (!confirm('Effacer toutes les données en mémoire ?')) return; dataRames = []; dataSillonsGares = { gares: [], sillons: [] }; trajets = []; populateSelectors(); renderTrajetsTable(); drawTD(); $('preData').style.display = 'none'; });
+
+        /* Create trajet: core logic */
+        function computeTravelSecondsForSillonAndRame(sillon, rame, options = { retour: false, dwellMin: 0, stopB: true }) {
+            // Based on troncons order; for retour true, traverse reversed
+            const troncons = (sillon.troncons || []).slice();
+            if (options.retour) troncons.reverse();
+            let totalSeconds = 0;
+            // For each troncon compute length (a-de) and effective speed = min(troncon.vitesse, rame.vitesse)
+            troncons.forEach(tc => {
+                const lenKm = Math.abs(tc.a - tc.de);
+                const vEff = Math.min(tc.vitesse || 0, rame.vitesse || Infinity); // km/h
+                if (vEff <= 0) { totalSeconds += Infinity; } else {
+                    const hours = lenKm / vEff;
+                    totalSeconds += Math.round(hours * 3600);
+                }
+            });
+            // dwell at gare B if stop requested (adds dwell minutes)
+            if (options.stopB && options.dwellMin && !isNaN(options.dwellMin)) totalSeconds += Math.round(options.dwellMin * 60);
+            return totalSeconds;
+        }
+
+        $('btnCreate').addEventListener('click', () => { createTrajet(false); });
+        $('btnCreateAndGo').addEventListener('click', () => { createTrajet(true); });
+
+        function createTrajet(selectAfterCreate) {
+            const nom = $('inputNomTrajet').value.trim() || `Trajet ${uid(trajets)}`;
+            const rameId = parseInt($('selRame').value);
+            const sillonId = parseInt($('selSillon').value);
+            const departInput = $('inputDepart').value;
+            if (!departInput) { alert('Renseigne la date/heure de départ'); return; }
+            const departDate = new Date(departInput);
+            if (isNaN(departDate)) { alert('Date de départ invalide'); return; }
+            const dwellMin = parseFloat($('inputDwell').value) || 0;
+            const stopB = $('selStopB').value === 'true';
+            const retour = $('selRetour').value === 'true';
+
+            const rame = dataRames.find(r => r.id === rameId);
+            const sillon = (dataSillonsGares.sillons || []).find(s => s.id === sillonId);
+            if (!rame || !sillon) { alert('Rame ou sillon introuvable'); return; }
+
+            // compute travel seconds using troncons and rame speeds
+            const travelSec = computeTravelSecondsForSillonAndRame(sillon, rame, { retour, dwellMin, stopB });
+            // compute theoretical arrival (minimal)
+            const arriveeTheorique = new Date(departDate.getTime() + travelSec * 1000);
+
+            const newId = uid(trajets);
+            const trajetObj = {
+                id: newId,
+                nom,
+                rameId,
+                sillonId,
+                departISO: toISOWithoutSeconds(departDate),
+                arriveeISO: toISOWithoutSeconds(arriveeTheorique), // by default same as theoretical
+                arriveeTheoriqueISO: toISOWithoutSeconds(arriveeTheorique),
+                dureeSec: travelSec,
+                retour,
+                stopB,
+                dwellMin,
+                createdAt: (new Date()).toISOString()
+            };
+
+            trajets.push(trajetObj);
+            renderTrajetsTable();
+            drawTD();
+            // update UI
+            $('theoArrival').textContent = formatDateShort(trajetObj.arriveeTheoriqueISO);
+            $('inputArrivee').value = formatDateISOToLocalInput(trajetObj.arriveeISO);
+            if (selectAfterCreate) { selectTrajetInTable(newId); }
+        }
+
+        /* When user modifies arrival manually */
+        $('btnApplyArr').addEventListener('click', () => {
+            const arrInput = $('inputArrivee').value;
+            if (!arrInput) { alert('Renseigne une date d\'arrivée'); return; }
+            const arrDate = new Date(arrInput);
+            if (isNaN(arrDate)) { alert('Date d\'arrivée invalide'); return; }
+            // find last created trajet (or selected) — prefer selected row
+            const selectedId = getSelectedTrajetId();
+            if (!selectedId) { alert('Sélectionne un trajet dans le tableau pour appliquer l\'heure.'); return; }
+            const t = trajets.find(x => x.id === selectedId);
+            if (!t) { alert('Trajet introuvable'); return; }
+            // Only allow arrival later than theoretical? user asked can adjust; we'll allow any but warn if earlier than theoretical.
+            const arrISO = toISOWithoutSeconds(arrDate);
+            if (new Date(arrISO) < new Date(t.arriveeTheoriqueISO)) {
+                if (!confirm('L\'heure choisie est antérieure à l\'heure théorique minimale. Confirmer ?')) return;
+            }
+            t.arriveeISO = arrISO;
+            renderTrajetsTable();
+            drawTD();
+        });
+
+        /* Render trajets table */
+        let lastSelectedRowId = null;
+        function renderTrajetsTable() {
+            const tbody = $('tblTrajets').querySelector('tbody');
+            tbody.innerHTML = '';
+            trajets.forEach(t => {
+                const rame = dataRames.find(r => r.id === t.rameId);
+                const sillon = (dataSillonsGares.sillons || []).find(s => s.id === t.sillonId);
+                const tr = document.createElement('tr');
+                tr.dataset.id = t.id;
+                tr.innerHTML = `
+      <td style="width:60px">${t.id}</td>
+      <td>${escapeHtml(t.nom)}</td>
+      <td>${rame ? `${rame.id} - ${escapeHtml(rame.nom)}` : t.rameId}</td>
+      <td>${sillon ? `${sillon.id} - ${escapeHtml(sillon.nom || ('#' + sillon.id))}` : t.sillonId}</td>
+      <td>${formatDateShort(t.departISO)}</td>
+      <td>${formatDateShort(t.arriveeISO)}</td>
+      <td class="blue">${formatDateShort(t.arriveeTheoriqueISO)}</td>
+      <td>${t.retour ? 'Oui' : 'Non'}</td>
+      <td>${t.stopB ? 'Oui' : 'Non'}</td>
+      <td>
+        <button class="small" onclick="selectTrajetFromRow(event, ${t.id})">Voir</button>
+        <button class="small" onclick="deleteTrajet(${t.id})">Suppr</button>
+      </td>
+    `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* Helpers for table selection */
+        function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+        function selectTrajetFromRow(ev, id) {
+            ev.stopPropagation();
+            selectTrajetInTable(id);
+        }
+        function selectTrajetInTable(id) {
+            // highlight row and populate arrival input with arriveeISO
+            const rows = document.querySelectorAll('#tblTrajets tbody tr');
+            rows.forEach(r => r.style.background = '');
+            const row = document.querySelector(`#tblTrajets tbody tr[data-id="${id}"]`);
+            if (row) row.style.background = '#18202a';
+            lastSelectedRowId = id;
+            const t = trajets.find(x => x.id === id);
+            if (t) {
+                $('inputNomTrajet').value = t.nom;
+                $('inputArrivee').value = formatDateISOToLocalInput(t.arriveeISO);
+                $('inputDepart').value = formatDateISOToLocalInput(t.departISO);
+                $('theoArrival').textContent = formatDateShort(t.arriveeTheoriqueISO);
+            }
+        }
+        function getSelectedTrajetId() { return lastSelectedRowId; }
+
+        /* Delete trajet */
+        function deleteTrajet(id) { if (!confirm('Supprimer ce trajet ?')) return; trajets = trajets.filter(t => t.id !== id); renderTrajetsTable(); drawTD(); }
+
+        /* Import/Export trajets JSON */
+        $('btnExportTrajets').addEventListener('click', () => {
+            if (!trajets.length) { alert('Aucun trajet à exporter'); return; }
+            const blob = new Blob([JSON.stringify(trajets, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'trajets_export.json'; document.body.appendChild(a); a.click(); a.remove();
+            URL.revokeObjectURL(url);
+        });
+        $('btnLoadTrajets').addEventListener('click', () => {
+            const f = document.createElement('input'); f.type = 'file'; f.accept = '.json,application/json';
+            f.onchange = e => {
+                const file = e.target.files[0]; if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    try {
+                        const parsed = JSON.parse(ev.target.result);
+                        if (Array.isArray(parsed)) {
+                            // basic validation
+                            parsed.forEach(p => { if (!p.id) p.id = uid(trajets); });
+                            trajets = trajets.concat(parsed);
+                            renderTrajetsTable(); drawTD();
+                            alert('Trajets importés.');
+                        } else { alert('Fichier de trajets invalide (doit être un array).'); }
+                    } catch (err) { alert('Impossible de parser JSON trajets'); }
+                };
+                reader.readAsText(file);
+            };
+            f.click();
+        });
+        $('btnClearTrajets').addEventListener('click', () => { if (!confirm('Effacer tous les trajets ?')) return; trajets = []; renderTrajetsTable(); drawTD(); });
+
+        /* Show data */
+        $('btnShowData').addEventListener('click', () => {
+            const pre = $('preData');
+            pre.style.display = pre.style.display === 'block' ? 'none' : 'block';
+            pre.textContent = JSON.stringify(dataSillonsGares, null, 2);
+        });
+        $('btnShowRames').addEventListener('click', () => {
+            const pre = $('preData');
+            pre.style.display = pre.style.display === 'block' ? 'none' : 'block';
+            pre.textContent = JSON.stringify(dataRames, null, 2);
+        });
+
+        /* ======================
+           Diagramme temps-distance
+           ====================== */
+        const canvas = $('tdPlot');
+        const ctx = canvas.getContext('2d');
+
+        function drawTD() {
+            // clear
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // axes: time X, distance Y
+            // compute time window: min depart, max arrival among trajets
+            if (!trajets.length) {
+                // render axes empty
+                ctx.fillStyle = '#222'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#888'; ctx.fillText('Aucun trajet', 20, 20); return;
+            }
+            const times = [];
+            let maxDistance = 0;
+            trajets.forEach(t => {
+                const dep = new Date(t.departISO).getTime();
+                const arr = new Date(t.arriveeISO || t.arriveeTheoriqueISO).getTime();
+                times.push(dep, arr);
+                // compute total distance from sillon distanceTotale
+                const s = (dataSillonsGares.sillons || []).find(sil => sil.id === t.sillonId);
+                if (s && s.distanceTotale) maxDistance = Math.max(maxDistance, Math.abs(s.distanceTotale));
+            });
+            if (times.length === 0) { return; }
+            const minTime = Math.min(...times);
+            const maxTime = Math.max(...times);
+            // add margin
+            const timeMargin = Math.max(15 * 60 * 1000, (maxTime - minTime) * 0.05); // 15 min or 5%
+            const t0 = minTime - timeMargin;
+            const t1 = maxTime + timeMargin;
+            // vertical margin for distance
+            const yMargin = 20;
+            const maxDist = Math.max(1, maxDistance);
+            // draw background
+            ctx.fillStyle = '#071017'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // axes
+            const left = 60, right = canvas.width - 20, top = 20, bottom = canvas.height - 40;
+            // draw grid horizontal (distance)
+            ctx.strokeStyle = '#162029'; ctx.lineWidth = 1;
+            const distSteps = 5;
+            for (let i = 0; i <= distSteps; i++) {
+                const y = top + (bottom - top) * (i / distSteps);
+                ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
+                const distLabel = (maxDist * (1 - i / distSteps)).toFixed(2) + ' km';
+                ctx.fillStyle = '#6f8a99'; ctx.fillText(distLabel, 6, y + 4);
+            }
+            // vertical grid for time: choose 6 ticks
+            const timeSteps = 6;
+            for (let i = 0; i <= timeSteps; i++) {
+                const frac = i / timeSteps;
+                const x = left + (right - left) * frac;
+                ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+                const tVal = new Date(t0 + (t1 - t0) * frac);
+                ctx.fillStyle = '#6f8a99';
+                ctx.fillText(tVal.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), x - 22, bottom + 16);
+            }
+            // plot each trajet as a line from (tDepart, 0) to (tArrival, distanceTotale)
+            let colorIdx = 0;
+            const colors = ['#ff7b7b', '#7bffb3', '#7bb1ff', '#ffdd7b', '#b67bff', '#7bffd6'];
+            trajets.forEach(t => {
+                const s = (dataSillonsGares.sillons || []).find(sil => sil.id === t.sillonId);
+                if (!s) return;
+                const dist = Math.abs(s.distanceTotale || 0);
+                const depT = new Date(t.departISO).getTime();
+                const arrT = new Date(t.arriveeISO || t.arriveeTheoriqueISO).getTime();
+                // map to canvas coords
+                const x1 = left + ((depT - t0) / (t1 - t0)) * (right - left);
+                const x2 = left + ((arrT - t0) / (t1 - t0)) * (right - left);
+                const y1 = top + (bottom - top) * (1 - 0 / maxDist); // starting at 0
+                const y2 = top + (bottom - top) * (1 - dist / maxDist);
+                // line
+                const color = colors[colorIdx % colors.length]; colorIdx++;
+                ctx.strokeStyle = color; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+                // label at end with arrival theoretical in blue marker
+                ctx.fillStyle = color; ctx.fillRect(x2 - 3, y2 - 3, 6, 6);
+                // blue marker for theoretical minimal arrival vertical aligned at theoretical time (could differ from current arrival)
+                const arrTheoT = new Date(t.arriveeTheoriqueISO).getTime();
+                const xTheo = left + ((arrTheoT - t0) / (t1 - t0)) * (right - left);
+                ctx.fillStyle = '#36a3ff'; ctx.fillRect(xTheo - 3, y2 - 8, 6, 6);
+                // text label
+                ctx.fillStyle = '#cfe'; ctx.fillText(`${t.nom} (${t.id})`, x2 + 6, y2 + 4);
+            });
+        }
+
+        /* initial draw (empty) */
+        drawTD();
+
+        /* Helper: return earliest possible departure default - now */
+        (function setDefaults() {
+            const now = new Date();
+            // round up to next 5min
+            now.setMinutes(Math.ceil(now.getMinutes() / 5) * 5, 0, 0);
+            $('inputDepart').value = formatDateISOToLocalInput(now.toISOString());
+        })();
+
+        /* Utility to get sillon by id */
+        function getSillonById(id) { return (dataSillonsGares.sillons || []).find(s => s.id === id); }
+        function getRameById(id) { return dataRames.find(r => r.id === id); }
+
+        /* Keep legend updated after create/delete */
+        function refreshUIAfterChange() {
+            renderTrajetsTable();
+            drawTD();
+        }
+
+        /* Helpers: select last created row when created with "Create & select" */
+        function selectLastCreated(id) {
+            selectTrajetInTable(id);
+        }
+
+        /* Get selected row on click in table (row click) */
+        document.querySelector('#tblTrajets tbody').addEventListener('click', function (e) {
+            const tr = e.target.closest('tr');
+            if (!tr) return;
+            const id = parseInt(tr.dataset.id);
+            selectTrajetInTable(id);
+        });
+
+        /* Escape global protections */
+        window.escapeHtml = escapeHtml;
+
+        /* initial population */
+        renderTrajetsTable();
+
+        /* Keyboard: recalc diagram when window resized */
+        window.addEventListener('resize', drawTD);
+
+    </script>
+</body>
+
+</html>

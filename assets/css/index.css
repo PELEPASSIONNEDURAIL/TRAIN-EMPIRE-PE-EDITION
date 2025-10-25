@@ -1,0 +1,179 @@
+/* ===================================================
+   INDEX.CSS — Styles spécifiques à index.html
+   Thème sombre moderne, fond noir, icônes
+=================================================== */
+
+/* ===================== BODY ===================== */
+body {
+    background-color: #000000; /* Fond noir global */
+    color: #e0e0e0;
+  }
+  
+  /* ===================== BANDEAU INCIDENT ===================== */
+  #incident-banner {
+    animation: slideDown 0.5s ease-out;
+  }
+  
+  #incident-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  #incident-list li.incident {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    background: rgba(255,255,255,0.05);
+    transition: all 0.3s ease;
+  }
+  
+  /* Icône intégrée */
+  #incident-list li.incident .icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+  
+  /* Couleurs incidents */
+  #incident-list li.incident.orange {
+    color: #FFA500;
+    border: 1px solid #FFA500;
+  }
+  
+  #incident-list li.incident.rouge {
+    color: #FF4500;
+    border: 1px solid #FF4500;
+  }
+  
+  /* ===================== LISTE TRAINS ===================== */
+  .train-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 65vh;
+    overflow-y: auto;
+    padding-right: 5px;
+  }
+  
+  .train-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 15px;
+    border-radius: 12px;
+    background: rgba(20,20,20,0.95);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.3s ease;
+  }
+  
+  .train-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 10px rgba(0,191,255,0.4);
+  }
+  
+  .train-card img.train-image {
+    max-height: 58px;
+    border-radius: 6px;
+    object-fit: contain;
+  }
+  
+  /* ===================== INFOS TRAINS ===================== */
+  .train-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.9rem;
+  }
+  
+  .train-info .route {
+    font-weight: 500;
+    color: #e0e0e0;
+  }
+  
+  .train-info .schedule {
+    font-size: 0.85rem;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  
+  .train-info .schedule .on-time {
+    color: #00ff9d;
+    font-weight: 600;
+  }
+  
+  .train-info .schedule .delayed {
+    color: #FFA500;
+    font-weight: 600;
+    text-decoration: line-through;
+  }
+  
+  .train-info .schedule .interrupted {
+    color: #FF4500;
+    font-weight: 700;
+  }
+  
+  /* ===================== CONTROLS (IMPORT / EXPORT) ===================== */
+  .controls select, .controls button {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    background: rgba(40,40,40,0.85);
+    color: #e0e0e0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .controls button:hover, .controls select:hover {
+    background: rgba(0,191,255,0.25);
+    color: #00bfff;
+    transform: scale(1.03);
+  }
+  
+  /* ===================== SCROLLBAR ===================== */
+  .train-list::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .train-list::-webkit-scrollbar-track {
+    background: rgba(50,50,50,0.3);
+    border-radius: 4px;
+  }
+  
+  .train-list::-webkit-scrollbar-thumb {
+    background: rgba(0,191,255,0.5);
+    border-radius: 4px;
+  }
+  
+  /* ===================== ANIMATIONS ===================== */
+  @keyframes slideDown {
+    0% {
+      transform: translateY(-30px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  /* ===================== RESPONSIVE ===================== */
+  @media (max-width: 768px) {
+    .train-card {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .train-info .schedule {
+      flex-direction: column;
+    }
+  }
+  

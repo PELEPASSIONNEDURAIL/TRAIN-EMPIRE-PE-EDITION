@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formation de Rames</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #f0f0f0;
+        }
+
+        header {
+            padding: 10px;
+            background-color: #1e1e1e;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-bottom: 2px solid #333;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #f0f0f0;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        button:hover {
+            background-color: #444;
+        }
+
+        .train-container,
+        .composition-container {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        .train-card,
+        .saved-card {
+            min-width: 120px;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 5px;
+            text-align: center;
+            flex-shrink: 0;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .train-card img,
+        .composition-container img,
+        .saved-images img {
+            display: block;
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+
+        input[type="text"] {
+            padding: 5px;
+            font-size: 1em;
+            margin-right: 10px;
+        }
+
+        .saved-container {
+            display: block;
+        }
+
+        .saved-card {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+
+        .saved-images {
+            display: flex;
+            align-items: flex-end;
+            gap: 0;
+            overflow-x: auto;
+        }
+
+        .composition-container img,
+        .saved-images img {
+            height: auto;
+            width: auto;
+        }
+
+        .saved-info {
+            margin-top: 5px;
+            font-size: 0.9em;
+            text-align: left;
+        }
+
+        .edit-button {
+            margin-top: 5px;
+            padding: 5px 10px;
+            background-color: #555;
+            font-size: 0.8em;
+        }
+
+        .edit-button:hover {
+            background-color: #666;
+        }
+
+        /* Bouton supprimer dans composition */
+        .remove-button {
+            display: block;
+            margin-top: 2px;
+            font-size: 0.7em;
+            background-color: #900;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .remove-button:hover {
+            background-color: #c00;
+        }
+    </style>
+</head>
+
+<body>
+    <header>Formation de Rames</header>
+    <main>
+        <p>Importez votre fichier JSON :</p>
+        <input type="file" id="jsonFile" accept=".json">
+        <button id="loadTrains">Charger les trains</button>
+
+        <h2>Trains Disponibles</h2>
+        <div class="train-container" id="trainContainer"></div>
+
+        <h2>Formation de la Rame</h2>
+        <div>
+            Nom de la rame : <input type="text" id="rameName" placeholder="Nom de la rame">
+            <button id="saveRame">Sauvegarder la rame</button>
+        </div>
+        <div class="composition-container" id="compositionContainer"></div>
+        <div>
+            <div>Longueur : <span id="totalLength">0,0</span> m</div>
+            <div>Vitesse : <span id="totalSpeed">0</span> km/h</div>
+            <div>Masse : <span id="totalMass">0</span></div>
+        </div>
+
+        <h2>Rames Sauvegardées</h2>
+        <div class="saved-container" id="savedContainer"></div>
+
+        <button id="exportJSON">Exporter JSON</button>
+
+        <p>Importer des rames existantes :</p>
+        <input type="file" id="importRamesFile" accept=".js,.json">
+        <button id="importRamesButton">Importer rames</button>
+
+        <script>
+            const trainContainer = document.getElementById('trainContainer');
+            const loadButton = document.getElementById('loadTrains');
+            const jsonFileInput = document.getElementById('jsonFile');
+
+            const compositionContainer = document.getElementById('compositionContainer');
+            const saveButton = document.getElementById('saveRame');
+            const rameNameInput = document.getElementById('rameName');
+            const totalLengthSpan = document.getElementById('totalLength');
+            const totalSpeedSpan = document.getElementById('totalSpeed');
+            const totalMassSpan = document.getElementById('totalMass');
+
+            const savedContainer = document.getElementById('savedContainer');
+            const exportButton = document.getElementById('exportJSON');
+
+            const importRamesFileInput = document.getElementById('importRamesFile');
+            const importRamesButton = document.getElementById('importRamesButton');
+
+            let trainsData = [];
+            let composition = [];
+            let savedRames = [];
+            let nextRameId = 1;
+
+            const MAX_LENGTH = 750; // m
+
+            let editingRameId = null;
+
+            function renderTrains() {
+                trainContainer.innerHTML = '';
+                trainsData.forEach(train => {
+                    const card = document.createElement('div');
+                    card.className = 'train-card';
+                    card.innerHTML = `
+                        <img src="${train.image}" alt="${train.nom}">
+                        <div>${train.nom}</div>
+                        <div>Vitesse max: ${train.vitesseMax} km/h</div>
+                        <div>Longueur: ${train.longueur} m</div>
+                        <div>Masse: ${train.capaciteVoyageurs ? train.capaciteVoyageurs + " voyageurs" : train.capaciteFretT ? train.capaciteFretT + " tonnes" : "N/A"}</div>
+                    `;
+                    card.addEventListener('click', () => addToComposition(train));
+                    trainContainer.appendChild(card);
+                });
+            }
+
+            function addToComposition(train) {
+                const currentLength = composition.reduce((sum, t) => sum + t.longueur, 0);
+                if (currentLength + train.longueur > MAX_LENGTH) {
+                    alert("La rame ne peut pas dépasser 750 m.");
+                    return;
+                }
+                composition.push(train);
+                renderComposition();
+            }
+
+            function removeFromComposition(index) {
+                composition.splice(index, 1);
+                renderComposition();
+            }
+
+            function renderComposition() {
+                compositionContainer.innerHTML = '';
+                composition.forEach((train, idx) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.style.position = 'relative';
+                    const img = document.createElement('img');
+                    img.src = train.image;
+                    img.alt = train.nom;
+                    wrapper.appendChild(img);
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-button';
+                    removeBtn.textContent = 'X';
+                    removeBtn.addEventListener('click', () => removeFromComposition(idx));
+                    wrapper.appendChild(removeBtn);
+
+                    compositionContainer.appendChild(wrapper);
+                });
+                updateRameStats();
+            }
+
+            function updateRameStats() {
+                const totalLength = composition.reduce((sum, t) => sum + t.longueur, 0);
+                const totalSpeed = composition.length > 0 ? Math.min(...composition.map(t => t.vitesseMax)) : 0;
+
+                const totalVoyageurs = composition.reduce((sum, t) => sum + (t.capaciteVoyageurs || 0), 0);
+                const totalTonnes = composition.reduce((sum, t) => sum + (t.capaciteFretT || 0), 0);
+
+                let massText = "";
+                if (totalVoyageurs > 0) massText += totalVoyageurs + " voyageurs";
+                if (totalTonnes > 0) massText += (massText ? " | " : "") + totalTonnes + " tonnes";
+
+                totalLengthSpan.textContent = totalLength.toFixed(1);
+                totalSpeedSpan.textContent = totalSpeed;
+                totalMassSpan.textContent = massText || "0";
+            }
+
+            function saveRame() {
+                if (!rameNameInput.value) { alert("Entrez un nom pour la rame."); return; }
+                if (composition.length === 0) { alert("Ajoutez au moins un train à la rame."); return; }
+
+                const totalLength = composition.reduce((sum, t) => sum + t.longueur, 0);
+                const totalSpeed = Math.min(...composition.map(t => t.vitesseMax));
+
+                const totalVoyageurs = composition.reduce((sum, t) => sum + (t.capaciteVoyageurs || 0), 0);
+                const totalTonnes = composition.reduce((sum, t) => sum + (t.capaciteFretT || 0), 0);
+
+                let massText = "";
+                if (totalVoyageurs > 0) massText += totalVoyageurs + " voyageurs";
+                if (totalTonnes > 0) massText += (massText ? " | " : "") + totalTonnes + " tonnes";
+
+                const newRame = {
+                    id: editingRameId || nextRameId++,
+                    nom: rameNameInput.value,
+                    longueur: totalLength,
+                    vitesse: totalSpeed,
+                    masse: massText || "0",
+                    composition: composition.map(t => ({ ...t }))
+                };
+
+                // Remplace l’ancienne rame si en édition
+                if (editingRameId) {
+                    savedRames = savedRames.filter(r => r.id !== editingRameId);
+                    editingRameId = null;
+                }
+
+                savedRames.push(newRame);
+                renderSavedRames();
+                composition = [];
+                renderComposition();
+                rameNameInput.value = '';
+            }
+
+            function renderSavedRames() {
+                savedContainer.innerHTML = '';
+                savedRames.forEach(rame => {
+                    const card = document.createElement('div');
+                    card.className = 'saved-card';
+
+                    const imagesDiv = document.createElement('div');
+                    imagesDiv.className = 'saved-images';
+                    rame.composition.forEach(t => {
+                        const img = document.createElement('img');
+                        img.src = t.image;
+                        img.alt = t.nom;
+                        imagesDiv.appendChild(img);
+                    });
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'saved-info';
+                    infoDiv.innerHTML = `Nom: ${rame.nom} | Longueur: ${rame.longueur.toFixed(1)} m | Masse: ${rame.masse} | Vitesse: ${rame.vitesse} km/h | ID: ${rame.id}`;
+
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'edit-button';
+                    editBtn.textContent = 'Éditer';
+                    editBtn.addEventListener('click', () => {
+                        composition = rame.composition.map(t => ({ ...t }));
+                        renderComposition();
+                        rameNameInput.value = rame.nom;
+                        editingRameId = rame.id;
+                    });
+
+                    card.appendChild(imagesDiv);
+                    card.appendChild(infoDiv);
+                    card.appendChild(editBtn);
+                    savedContainer.appendChild(card);
+                });
+            }
+
+            function exportRamesJSON() {
+                if (savedRames.length === 0) { alert("Aucune rame à exporter."); return; }
+                const dataStr = JSON.stringify(savedRames, null, 2);
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'rame.js';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            function importRames(file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const parsed = JSON.parse(e.target.result);
+                        if (!Array.isArray(parsed)) { alert('JSON invalide'); return; }
+                        savedRames = savedRames.concat(parsed);
+                        renderSavedRames();
+                        const maxId = savedRames.reduce((max, r) => Math.max(max, r.id), 0);
+                        nextRameId = maxId + 1;
+                    } catch (err) {
+                        alert('Erreur parsing JSON: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            loadButton.addEventListener('click', () => {
+                const file = jsonFileInput.files[0];
+                if (!file) { alert('Sélectionnez un fichier JSON.'); return; }
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const parsed = JSON.parse(e.target.result);
+                        if (!Array.isArray(parsed.trains)) { alert('JSON invalide'); return; }
+                        trainsData = parsed.trains;
+                        renderTrains();
+                    } catch (err) { alert('Erreur parsing JSON: ' + err.message); }
+                };
+                reader.readAsText(file);
+            });
+
+            saveButton.addEventListener('click', saveRame);
+            exportButton.addEventListener('click', exportRamesJSON);
+            importRamesButton.addEventListener('click', () => {
+                const file = importRamesFileInput.files[0];
+                if (!file) { alert("Sélectionnez un fichier de rames."); return; }
+                importRames(file);
+            });
+        </script>
+</body>
+
+</html>

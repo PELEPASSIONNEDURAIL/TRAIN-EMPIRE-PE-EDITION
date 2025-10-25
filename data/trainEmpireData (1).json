@@ -1,0 +1,58 @@
+{
+  "gares": [
+    {
+      "id": 1,
+      "nom": "Paris Gare de Lyon"
+    },
+    {
+      "id": 2,
+      "nom": "Maison Alfort-Alfortville"
+    }
+  ],
+  "sillons": [
+    {
+      "id": 1,
+      "gareA": 1,
+      "gareB": 2,
+      "distanceTotale": 6.2,
+      "limiteSortieA": {
+        "type": "distance",
+        "value": 1
+      },
+      "troncons": [
+        {
+          "id": 1,
+          "nom": "Paris Gare de Lyon",
+          "de": 0,
+          "a": 1,
+          "vitesse": 30,
+          "type": "gare"
+        },
+        {
+          "id": 3,
+          "nom": "PLM1",
+          "de": 1,
+          "a": 2.1,
+          "vitesse": 100,
+          "type": "inter"
+        },
+        {
+          "id": 4,
+          "nom": "PLM2",
+          "de": 2.1,
+          "a": 4,
+          "vitesse": 115,
+          "type": "inter"
+        },
+        {
+          "id": 2,
+          "nom": "Maison Alfort-Alfortville",
+          "de": 4,
+          "a": 6.2,
+          "vitesse": 135,
+          "type": "gare"
+        }
+      ]
+    }
+  ]
+}

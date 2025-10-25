@@ -1,0 +1,282 @@
+/* ================================================
+   GLOBAL.CSS — STYLE COMMUNS
+   Pour toutes les pages du projet TRAIN EMPIRE PE EDITION
+   Thème sombre, moderne et épuré
+================================================= */
+
+/* ===================== RESET ===================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    scroll-behavior: smooth;
+  }
+  
+  html, body {
+    height: 100%;
+    background-color: #121212; /* Fond sombre global */
+    color: #e0e0e0;
+    line-height: 1.5;
+  }
+  
+  ul, ol {
+    list-style: none;
+  }
+  
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  /* ===================== CONTENEURS ===================== */
+  .container {
+    width: 95%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  /* ===================== TYPOGRAPHIE ===================== */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: #ffffff;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.2rem;
+  }
+  
+  p, span, label {
+    font-size: 0.95rem;
+  }
+  
+  /* ===================== GLASS CARDS / BANNERS ===================== */
+  .glass-banner, .glass-header, .glass-footer, .stat-card, .train-card {
+    background: rgba(30, 30, 30, 0.85);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* ===================== HEADER ===================== */
+  header#main-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding: 10px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  header h1.logo {
+    font-weight: 700;
+    font-size: 1.7rem;
+    color: #00bfff;
+  }
+  
+  header h1.logo small {
+    font-size: 0.8rem;
+    color: #aaa;
+  }
+  
+  .nav-links a {
+    margin-left: 15px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background 0.3s;
+  }
+  
+  .nav-links a:hover, .nav-links a.active {
+    background: rgba(0, 191, 255, 0.2);
+    color: #00bfff;
+  }
+  
+  /* ===================== BANNIERE INCIDENT ===================== */
+  #incident-banner {
+    position: sticky;
+    top: 60px; /* sous header */
+    width: 100%;
+    padding: 8px 0;
+    z-index: 900;
+  }
+  
+  #incident-banner .banner-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 0 20px;
+  }
+  
+  #incident-list li.incident.orange {
+    color: #FFA500; /* ralentissement */
+  }
+  
+  #incident-list li.incident.rouge {
+    color: #FF4500; /* interruption */
+  }
+  
+  /* ===================== STAT CARDS ===================== */
+  .stats-section {
+    margin: 90px 0 20px 0;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px;
+  }
+  
+  .stat-card {
+    padding: 15px 20px;
+    border-radius: 10px;
+    background: rgba(30,30,30,0.85);
+    border: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+    transition: transform 0.3s;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-3px);
+  }
+  
+  .stat-card h3 {
+    font-size: 1rem;
+    margin-bottom: 5px;
+  }
+  
+  .stat-card p, .stat-card .stat-value {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #00bfff;
+  }
+  
+  /* ===================== MAIN CONTENT ===================== */
+  .main-container {
+    padding-bottom: 50px;
+  }
+  
+  .traffic-section {
+    margin-top: 10px;
+  }
+  
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .controls select, .controls button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: rgba(50,50,50,0.8);
+    color: #e0e0e0;
+    transition: background 0.3s;
+  }
+  
+  .controls select:hover, .controls button:hover {
+    background: rgba(0,191,255,0.2);
+    color: #00bfff;
+  }
+  
+  /* ===================== LISTE TRAINS ===================== */
+  .train-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 65vh;
+    overflow-y: auto;
+    padding-right: 5px;
+  }
+  
+  .train-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 15px;
+    border-radius: 10px;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  
+  .train-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,191,255,0.3);
+  }
+  
+  /* ===================== FOOTER ===================== */
+  footer.footer {
+    margin-top: 30px;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+  
+  /* ===================== SCROLLBAR ===================== */
+  .train-list::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .train-list::-webkit-scrollbar-track {
+    background: rgba(50,50,50,0.3);
+    border-radius: 4px;
+  }
+  
+  .train-list::-webkit-scrollbar-thumb {
+    background: rgba(0,191,255,0.5);
+    border-radius: 4px;
+  }
+  
+  /* ===================== BOUTONS GENERIQUES ===================== */
+  button.btn {
+    background: rgba(50,50,50,0.8);
+    color: #e0e0e0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  button.btn:hover {
+    background: rgba(0,191,255,0.2);
+    color: #00bfff;
+  }
+  
+  /* ===================== RESPONSIVE ===================== */
+  @media (max-width: 768px) {
+    .header-container, .banner-container, .section-header {
+      flex-direction: column;
+      gap: 10px;
+    }
+    .stats-grid {
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+    .controls {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+  

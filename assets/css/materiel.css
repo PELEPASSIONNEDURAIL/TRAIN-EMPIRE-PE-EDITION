@@ -1,0 +1,63 @@
+body.dark-theme {
+    background-color: #111;
+    color: #eee;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    padding: 1rem;
+    text-align: center;
+    background-color: #222;
+}
+
+main {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    background-color: #1a1a1a;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+input, select, button {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: none;
+    font-size: 1rem;
+}
+
+button {
+    background-color: #4caf50;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+#materielContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.materiel-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background-color: #222;
+    padding: 0.5rem;
+    border-radius: 6px;
+}
+
+.materiel-item img {
+    height: 40px;
+    object-fit: contain;
+}

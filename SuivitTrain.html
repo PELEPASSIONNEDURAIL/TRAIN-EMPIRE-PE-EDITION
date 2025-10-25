@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Suivi de Trains</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #import-container {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        input[type="file"] {
+            color: #2196F3;
+        }
+
+        #train-container {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 0;
+            border-bottom: 2px solid #333;
+            align-items: flex-end;
+        }
+
+        .train-images {
+            display: flex;
+            align-items: flex-end;
+            gap: 0;
+            margin-bottom: 3px;
+        }
+
+        .train-images img {
+            display: block;
+            width: auto;
+            /* taille réelle */
+            height: auto;
+            /* taille réelle */
+        }
+
+        #trajet-data-container {
+            display: flex;
+            overflow-x: auto;
+            padding: 5px;
+            gap: 20px;
+            border-top: 1px solid #333;
+            align-items: center;
+            /* tout à la même hauteur */
+            white-space: nowrap;
+        }
+
+        .trajet-data {
+            display: flex;
+            flex-direction: row;
+            /* infos sur la même ligne */
+            align-items: center;
+            /* alignement vertical */
+            min-width: max-content;
+            background-color: #1e1e1e;
+            padding: 8px;
+            border-radius: 5px;
+            gap: 15px;
+            /* espace entre les infos */
+        }
+
+        .trajet-data span {
+            display: block;
+            margin-bottom: 0;
+        }
+
+        .status {
+            color: #4fc3f7;
+            font-weight: bold;
+        }
+
+        .arrived {
+            color: #4caf50;
+        }
+
+        .late {
+            color: #f44336;
+        }
+
+        /* Scroll bars */
+        #train-container::-webkit-scrollbar,
+        #trajet-data-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #train-container::-webkit-scrollbar-thumb,
+        #trajet-data-container::-webkit-scrollbar-thumb {
+            background-color: #555;
+            border-radius: 4px;
+        }
+
+        #train-container::-webkit-scrollbar-track,
+        #trajet-data-container::-webkit-scrollbar-track {
+            background: #222;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Suivi de Trains</h1>
+    <div id="import-container">
+        <input type="file" id="jsonFiles" multiple accept=".json">
+    </div>
+
+    <div id="train-container"></div>
+    <div id="trajet-data-container"></div>
+
+    <script>
+        let rames = [];
+        let trajets = [];
+        let sillons = [];
+        let gares = [];
+
+        document.getElementById("jsonFiles").addEventListener("change", function (evt) {
+            const files = evt.target.files;
+            let loaded = 0;
+            rames = []; trajets = []; sillons = []; gares = [];
+
+            for (let file of files) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        let data = JSON.parse(e.target.result);
+                        if (Array.isArray(data)) {
+                            if (data[0]?.rameId) trajets.push(...data);
+                            else if (data[0]?.composition) rames.push(...data);
+                            else if (data[0]?.troncons || data[0]?.gareA) sillons.push(...data);
+                            else if (data[0]?.nom) gares.push(...data);
+                        } else {
+                            if (data.rame) rames.push(...data.rame);
+                            if (data.trajet) trajets.push(...data.trajet);
+                            if (data.sillons) sillons.push(...data.sillons);
+                            if (data.gares) gares.push(...data.gares);
+                        }
+                    } catch (err) {
+                        console.error("Erreur JSON:", err);
+                    }
+                    loaded++;
+                    if (loaded === files.length) renderTrains();
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function getSillonById(id) {
+            return sillons.find(s => s.id === id);
+        }
+
+        function getGareById(id) {
+            return gares.find(g => g.id === id);
+        }
+
+        function renderTrains() {
+            const trainContainer = document.getElementById("train-container");
+            const trajetContainer = document.getElementById("trajet-data-container");
+            trainContainer.innerHTML = '';
+            trajetContainer.innerHTML = '';
+
+            if (trajets.length === 0) {
+                trainContainer.innerHTML = "<p>Aucun trajet disponible. Importez vos JSON.</p>";
+                return;
+            }
+
+            trajets.forEach(trajet => {
+                const rame = rames.find(r => r.id === trajet.rameId);
+                const sillon = getSillonById(trajet.sillonId);
+                if (!rame || !sillon) return;
+
+                // train images
+                const trainDiv = document.createElement("div");
+                trainDiv.className = "train-images";
+                rame.composition.forEach(c => {
+                    const img = document.createElement("img");
+                    img.src = c.image;
+                    trainDiv.appendChild(img);
+                });
+                trainContainer.appendChild(trainDiv);
+
+                // vitesse actuelle
+                let vitesse = 0;
+                const now = new Date();
+                const depart = new Date(trajet.departISO);
+                const arrivee = new Date(trajet.arriveeISO);
+                let statusText = "En route";
+
+                if (now >= arrivee) {
+                    vitesse = 0;
+                    statusText = "Arrivé";
+                } else if (now < depart) {
+                    vitesse = 0;
+                    statusText = "En attente";
+                } else {
+                    let tronconVitesse = 0;
+                    sillon.troncons.forEach(tr => {
+                        if (tr.vitesse > tronconVitesse) tronconVitesse = tr.vitesse;
+                    });
+                    vitesse = Math.min(tronconVitesse, rame.vitesse);
+                }
+
+                // affiche données du trajet horizontal
+                const trajetDiv = document.createElement("div");
+                trajetDiv.className = "trajet-data";
+
+                const gareDepart = getGareById(sillon.gareA);
+                const gareArrivee = getGareById(sillon.gareB);
+                trajetDiv.innerHTML = `
+            <span><strong>Trajet :</strong> ${trajet.nom}</span>
+            <span><strong>Gare départ :</strong> ${gareDepart ? gareDepart.nom : sillon.troncons[0].nom} (${new Date(trajet.departISO).toLocaleTimeString()})</span>
+            <span><strong>Gare arrivée :</strong> ${gareArrivee ? gareArrivee.nom : sillon.troncons[sillon.troncons.length - 1].nom} (${new Date(trajet.arriveeISO).toLocaleTimeString()})</span>
+            <span><strong>Vitesse :</strong> ${vitesse} km/h</span>
+            <span class="status ${statusText === 'Arrivé' ? 'arrived' : 'late'}">${statusText}</span>
+        `;
+                trajetContainer.appendChild(trajetDiv);
+            });
+        }
+    </script>
+</body>
+
+</html>
