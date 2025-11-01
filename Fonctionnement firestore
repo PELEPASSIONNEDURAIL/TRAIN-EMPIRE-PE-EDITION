@@ -1,0 +1,45 @@
+[ Page HTML/JS client ]
+          |
+          | 1. Chargement JS
+          v
+[ Firebase JS - updateGameState() ]
+          |
+          |---> Vérifie si document "gameState/global" existe
+          |         |
+          |         |---> NON → Initialise l’état du jeu (trains, fret, voyageurs)
+          |         |
+          |         |---> OUI → Récupère données actuelles
+          |
+          |---> Pour chaque train :
+          |         |
+          |         |---> Si heureDepart passée et pas encore parti → train.depart = true
+          |         |
+          |         |---> Nettoie incidents terminés (fin < now)
+          |         |
+          |         |---> Si train roule et pas d’incidents actifs → générer un incident aléatoire
+          |
+          |---> Calcul des stats :
+          |         |---> fretTotal = somme de tous les trains partis
+          |         |---> voyageurs = somme de tous les trains partis
+          |
+          |---> Sauvegarde l’état mis à jour dans Firestore
+          v
+[ Firebase Firestore ]
+          |
+          |---> Document "gameState/global" contient :
+          |         • trains : [{ id, gareDepart, gareArrivee, depart, incidents[], fret, voyageurs, electrifie }]
+          |         • fretTotal
+          |         • voyageurs
+          |
+          |---> Tous les clients sont automatiquement notifiés via :
+          |       db.collection("gameState").doc("global").onSnapshot(...)
+          v
+[ Tous les clients connectés ]
+          |
+          |---> Mise à jour temps réel des trains, incidents et stats
+          |---> Interface utilisateur reflète immédiatement les changements
+          |
+          |---> Les joueurs voient :
+                    • Trains démarrés ou en retard
+                    • Incidents actifs
+                    • Statistiques globales

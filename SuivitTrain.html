@@ -297,5 +297,355 @@
     afficherLignes();
     afficherRames();
 </script>
+<!-- SuivitTrain.html (base before adding incident banner) -->
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi Train</title>
+    <style>
+        /* Styles existants du jeu (ajoute les tiens ici plus tard) */
+    </style>
+</head>
+
+<body>
+
+    <!-- Contenu existant du suivi train -->
+    <div id="gameContainer">
+        <!-- ... -->
+    </div>
+
+</body>
+
+</html>
+<!-- ======== TABLEAU STATS TRAINS ======== -->
+<div id="statsWrapper" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #111;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    z-index: 9998;
+    border-bottom: 2px solid #444;
+">
+    <table id="statsTable" style="
+        width: 100%;
+        border-collapse: collapse;
+    ">
+        <thead>
+            <tr style="background:#222;">
+                <th style="padding:4px;border:1px solid #333;">Train</th>
+                <th style="padding:4px;border:1px solid #333;">Trajet</th>
+                <th style="padding:4px;border:1px solid #333;">Vitesse actuelle (km/h)</th>
+                <th style="padding:4px;border:1px solid #333;">Vitesse max (km/h)</th>
+                <th style="padding:4px;border:1px solid #333;">Distance parcourue (km)</th>
+                <th style="padding:4px;border:1px solid #333;">Retard (km/h)</th>
+            </tr>
+        </thead>
+        <tbody id="statsBody">
+            <!-- lignes mises à jour dynamiquement -->
+        </tbody>
+    </table>
+</div>
+<script>
+    // fonction d'affichage du tableau de stats
+    function mettreAJourStatsUI(statsTrains) {
+        const tbody = document.getElementById("statsBody");
+        tbody.innerHTML = ""; // reset
+
+        Object.keys(statsTrains).forEach(trainId => {
+            Object.keys(statsTrains[trainId]).forEach(trajetId => {
+                const stat = statsTrains[trainId][trajetId];
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td style="padding:4px;border:1px solid #333;">${trainId}</td>
+                    <td style="padding:4px;border:1px solid #333;">${trajetId}</td>
+                    <td style="padding:4px;border:1px solid #333;">${stat.vitesseActuelle?.toFixed(1) || 0}</td>
+                    <td style="padding:4px;border:1px solid #333;">${stat.vitesseMax?.toFixed(1) || 0}</td>
+                    <td style="padding:4px;border:1px solid #333;">${stat.distance.toFixed(2)}</td>
+                    <td style="padding:4px;border:1px solid #333;">${stat.retard.toFixed(2)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        });
+    }
+
+    // liaison avec firebase.js
+    if (!window._updateStatsFromFirebase) {
+        window._updateStatsFromFirebase = mettreAJourStatsUI;
+    }
+</script>
+<!-- Tableau live des trains -->
+<table id="statsTrains" style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif;">
+    <thead style="position: sticky; top: 0; background: #333; color: #fff;">
+        <tr>
+            <th style="padding: 8px; border: 1px solid #555;">Train</th>
+            <th style="padding: 8px; border: 1px solid #555;">Trajet</th>
+            <th style="padding: 8px; border: 1px solid #555;">Distance (km)</th>
+            <th style="padding: 8px; border: 1px solid #555;">Temps (min)</th>
+            <th style="padding: 8px; border: 1px solid #555;">Retard (min)</th>
+        </tr>
+    </thead>
+    <tbody id="statsBody"></tbody>
+</table>
+
+<style>
+    #statsTrains tbody tr:nth-child(even) {
+        background-color: #f0f0f0;
+    }
+
+    #statsTrains tbody tr:nth-child(odd) {
+        background-color: #fff;
+    }
+
+    #statsTrains th,
+    #statsTrains td {
+        text-align: center;
+    }
+</style>
+
+<script>
+    // Fonction pour mettre à jour le tableau
+    window._updateStatsFromFirebase = function (stats) {
+        const tbody = document.getElementById('statsBody');
+        tbody.innerHTML = ''; // clear
+        Object.keys(stats).forEach(trainId => {
+            Object.keys(stats[trainId]).forEach(trajetId => {
+                const stat = stats[trainId][trajetId];
+                const tr = document.createElement('tr');
+
+                const tdTrain = document.createElement('td');
+                tdTrain.textContent = trainId;
+                tr.appendChild(tdTrain);
+
+                const tdTrajet = document.createElement('td');
+                tdTrajet.textContent = trajetId;
+                tr.appendChild(tdTrajet);
+
+                const tdDistance = document.createElement('td');
+                tdDistance.textContent = stat.distance.toFixed(2);
+                tr.appendChild(tdDistance);
+
+                const tdTemps = document.createElement('td');
+                tdTemps.textContent = (stat.temps / 60).toFixed(1);
+                tr.appendChild(tdTemps);
+
+                const tdRetard = document.createElement('td');
+                tdRetard.textContent = (stat.retard / 60).toFixed(1);
+                tr.appendChild(tdRetard);
+
+                tbody.appendChild(tr);
+            });
+        });
+    }
+</script>
+<script>
+    // ----- MISE À JOUR LIVE DU TABLEAU -----
+    // On suppose que ton tableau a l'id "statsTable"
+    const statsTable = document.getElementById("statsTable");
+
+    // Fonction pour créer une ligne si elle n'existe pas
+    function getOrCreateRow(trainId) {
+        let row = document.getElementById(`train-${trainId}`);
+        if (!row) {
+            row = statsTable.insertRow();
+            row.id = `train-${trainId}`;
+            row.insertCell(0).textContent = trainId; // Colonne Train
+            row.insertCell(1).textContent = "0";     // Distance
+            row.insertCell(2).textContent = "0";     // Temps
+            row.insertCell(3).textContent = "0";     // Retard
+            row.insertCell(4).textContent = "";      // Incidents actifs
+        }
+        return row;
+    }
+
+    // Fonction pour mettre à jour le tableau
+    function updateStatsTable() {
+        trains.forEach(train => {
+            const row = getOrCreateRow(train.id);
+            const trajetId = train.trajetId || "default";
+            const stat = statsTrains[train.id][trajetId];
+
+            // Distance en km, temps en minutes, retard en minutes
+            row.cells[1].textContent = stat.distance.toFixed(2);
+            row.cells[2].textContent = (stat.temps / 60).toFixed(1);
+            row.cells[3].textContent = (stat.retard / 60).toFixed(1);
+
+            // Liste des incidents actifs
+            if (train.incidents && train.incidents.length > 0) {
+                row.cells[4].innerHTML = train.incidents.map(i => `<span style="color:${i.couleur}">${i.nom}</span>`).join(", ");
+            } else {
+                row.cells[4].textContent = "-";
+            }
+        });
+    }
+
+    // ----- BOUCLE DE MISE À JOUR DU TABLEAU -----
+    // Même interval que pour incidents et stats
+    setInterval(() => {
+        updateStatsTable();
+    }, tickInterval);
+
+    // ----- STYLES TABLEAU DYNAMIQUE -----
+    // Optionnel: on peut rendre les incidents rouges pour interruption
+    const style = document.createElement('style');
+    style.textContent = `
+        #statsTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+        }
+        #statsTable th, #statsTable td {
+            border: 1px solid #ccc;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        #statsTable th {
+            background: #333;
+            color: #fff;
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+<!-- À mettre juste avant </body> -->
+<script>
+    // ----- COMBOS D'INCIDENTS -----
+    const COMBOS_INCIDENTS = [
+        {
+            nom: "Panne électrique + Rupture caténaire",
+            composants: ["defaut_alimentation", "rupture_caternaire"],
+            type: "interruption",
+            duree: 3,
+            effet: train => train.vitesseActuelle = 0,
+            couleur: "#FF0000"
+        },
+        {
+            nom: "Animaux + Panne passage niveau",
+            composants: ["animaux_voies", "panne_passage_niveau"],
+            type: "ralentissement",
+            duree: 2,
+            effet: train => train.vitesseActuelle *= 0.3,
+            couleur: "#FF8C00"
+        },
+        {
+            nom: "Accident + Bagage abandonné",
+            composants: ["accident_personne", "bagage_abandonne"],
+            type: "interruption",
+            duree: 4,
+            effet: train => train.vitesseActuelle = 0,
+            couleur: "#8B0000"
+        }
+    ];
+
+    // Vérifie et applique les combos si tous les composants sont actifs
+    function appliquerCombos() {
+        COMBOS_INCIDENTS.forEach(combo => {
+            const composantsActifs = combo.composants.every(code =>
+                incidentsActifs.some(i => i.id === code)
+            );
+            if (composantsActifs && !incidentsActifs.some(i => i.combo === combo.nom)) {
+                const nouvelCombo = {
+                    id: `combo_${combo.nom.replace(/\s+/g, "_")}`,
+                    nom: combo.nom,
+                    debut: Date.now(),
+                    fin: Date.now() + combo.duree * 3600 * 1000,
+                    type: combo.type,
+                    couleur: combo.couleur,
+                    combo: combo.nom
+                };
+                incidentsActifs.push(nouvelCombo);
+
+                // applique sur tous les trains
+                trains.forEach(train => combo.effet(train));
+
+                afficherIncidentLive(nouvelCombo);
+            }
+        });
+    }
+
+    // Intégration dans la boucle principale
+    setInterval(() => {
+        genererIncident();      // incidents simples
+        appliquerCombos();      // incidents combinés
+        nettoyerIncidents();    // retire les incidents expirés
+        mettreAJourStats();     // stats dynamiques
+    }, tickInterval);
+</script>
+<style>
+    /* Bandeau horizontal fixe */
+    #bandeauWrapper {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #222;
+        color: #fff;
+        z-index: 9999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Ligne bandeau horizontal */
+    #bandeauLive {
+        white-space: nowrap;
+        overflow: hidden;
+        padding: 4px 0;
+        border-bottom: 1px solid #555;
+    }
+
+    /* Contenu déroulant horizontal */
+    #bandeauContenu {
+        display: inline-block;
+        padding-left: 100%;
+        white-space: nowrap;
+        will-change: transform;
+    }
+
+    /* Historique vertical */
+    #historiqueWrapper {
+        max-height: 150px;
+        overflow-y: auto;
+        padding: 4px;
+    }
+
+    /* Chaque événement dans l'historique */
+    .histEvenement {
+        margin: 2px 0;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+
+    /* Icônes simples selon type */
+    .icIncident::before {
+        content: "⚠️ ";
+    }
+
+    .icChantier::before {
+        content: "🚧 ";
+    }
+
+    /* Catégorisation couleur (exemple) */
+    .type-interruption {
+        background: rgba(255, 69, 0, 0.2);
+    }
+
+    .type-ralentissement {
+        background: rgba(30, 144, 255, 0.2);
+    }
+
+    .type-chantier {
+        background: rgba(255, 215, 0, 0.2);
+    }
+</style>
 
 </html>

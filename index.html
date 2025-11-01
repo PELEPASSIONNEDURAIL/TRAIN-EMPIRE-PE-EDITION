@@ -290,9 +290,104 @@
         // Test
         ajouterTrain("T001", "TGV Express", "Voyageur");
         listerTrains();
+
     </script>
+    <!-- MENU CONNEXION / INSCRIPTION -->
+    <div id="menuConnexion">
+        <div id="menuConnexionInner">
+            <h2>Connexion / Inscription</h2>
+            <input type="text" id="pseudo" placeholder="Pseudo">
+            <input type="password" id="mdp" placeholder="Mot de passe">
+            <button id="btnConnexion">Connexion</button>
+            <button id="btnInscription">Inscription</button>
+            <button id="btnSkipDev" style="background:#ff5722;">DEV / Skip</button>
+            <p id="menuMsg" style="color:yellow;margin-top:10px;"></p>
+        </div>
+    </div>
 
-</body>
-<button onclick="location.href='hub.html'">Accéder au Hub des pages</button>
+    <script>
+        window.onload = () => {
+            const menu = document.getElementById('menuConnexion');
+            const msg = document.getElementById('menuMsg');
 
-</html>
+            const jeu = document.getElementById('jeu');
+            if (jeu) jeu.style.display = 'none';
+
+            async function inscriptionWrapper() {
+                const pseudo = document.getElementById('pseudo').value.trim();
+                const mdp = document.getElementById('mdp').value.trim();
+                if (!pseudo || !mdp) { msg.textContent = "Remplis tous les champs !"; return; }
+
+                msg.textContent = "Création du compte...";
+                const succes = await window.authCreerCompte(pseudo, mdp);
+                if (succes) {
+                    msg.textContent = "Compte créé ! Connecte-toi maintenant.";
+                } else {
+                    msg.textContent = "Pseudo déjà utilisé.";
+                }
+            }
+
+            async function connexionWrapper() {
+                const pseudo = document.getElementById('pseudo').value.trim();
+                const mdp = document.getElementById('mdp').value.trim();
+                if (!pseudo || !mdp) { msg.textContent = "Remplis tous les champs !"; return; }
+
+                msg.textContent = "Connexion...";
+                const dataJoueur = await window.authConnexion(pseudo, mdp);
+                if (dataJoueur) {
+                    menu.style.display = 'none';
+                    if (jeu) jeu.style.display = 'block';
+                    msg.textContent = "";
+                    if (window.chargerDonnees) await window.chargerDonnees(pseudo);
+                    console.log("Joueur connecté :", pseudo, dataJoueur);
+                } else {
+                    msg.textContent = "Pseudo ou mot de passe incorrect.";
+                }
+            }
+
+            // BOUTON DEV / SKIP
+            function skipDev() {
+                menu.style.display = 'none';
+                if (jeu) jeu.style.display = 'block';
+                console.log("DEV : Skip menu, accès direct à l'index");
+            }
+
+            document.getElementById('btnInscription').addEventListener('click', inscriptionWrapper);
+            document.getElementById('btnConnexion').addEventListener('click', connexionWrapper);
+            document.getElementById('btnSkipDev').addEventListener('click', skipDev);
+        };
+
+        // Styles overlay
+        const style = document.createElement('style');
+        style.textContent = `
+  #menuConnexion {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    display:flex; justify-content:center; align-items:center;
+    backdrop-filter: blur(5px); background: rgba(0,0,0,0.5); z-index: 9999;
+  }
+  #menuConnexionInner {
+    background:#111; color:#eee; padding:30px; border-radius:10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6); text-align:center; min-width:300px;
+  }
+  #menuConnexion input {
+    display:block; width:80%; margin:10px auto; padding:8px; border-radius:5px; border:none;
+    font-size:1rem;
+  }
+  #menuConnexion button {
+    padding:8px 15px; margin:5px; border-radius:5px; border:none;
+    cursor:pointer; background: var(--accent); color:#fff; font-weight:600;
+  }
+  #menuConnexion button:hover { background: #1c7be0; }
+  #btnSkipDev:hover { background: #ff7043; }
+`;
+        document.head.appendChild(style);
+        window.addEventListener("DOMContentLoaded", () => {
+            updatePlayerOnOpen().then(data => {
+                console.log("Joueur chargé et game mis à jour :", data);
+            });
+        });
+
+</body >
+            <button onclick="location.href='hub.html'">Accéder au Hub des pages</button>
+
+</html >
