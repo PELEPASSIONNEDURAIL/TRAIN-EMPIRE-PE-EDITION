@@ -171,6 +171,14 @@
                 </tbody>
             </table>
         </section>
+
+        <!-- Bouton Hub -->
+        <div style="text-align:center; margin:20px;">
+            <button onclick="location.href='hub.html'"
+                style="padding:10px 20px; font-size:1rem; border-radius:5px; cursor:pointer; background:var(--accent); color:#fff; border:none;">
+                Accéder au Hub des pages
+            </button>
+        </div>
     </main>
 
     <footer>
@@ -228,15 +236,14 @@
     <script src="js/ligne.js"></script>
     <script src="js/traffic.js"></script>
     <script src="js/main.js"></script>
+
+    <!-- Firebase -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-analytics.js";
-        // TODO: Add SDKs for Firebase products that you want to use
-        // https://firebase.google.com/docs/web/setup#available-libraries
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
             apiKey: "AIzaSyCZ0aKxn8Nxao8vlluD0nTbBssG7lzSwPo",
             authDomain: "rail-empire-b5278.firebaseapp.com",
@@ -247,29 +254,35 @@
             measurementId: "G-TME87RHCTC"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
-    </script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-
-        // Ta config Firebase existante
-        const firebaseConfig = {
-            apiKey: "AIzaSyCZ0aKxn8Nxao8vlluD0nTbBssG7lzSwPo",
-            authDomain: "rail-empire-b5278.firebaseapp.com",
-            projectId: "rail-empire-b5278",
-            storageBucket: "rail-empire-b5278.firebasestorage.app",
-            messagingSenderId: "391417610159",
-            appId: "1:391417610159:web:18c8ec8b692d9cbee0b95a",
-            measurementId: "G-TME87RHCTC"
-        };
-
-        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Exemple : créer un train dans Firestore
+        // ----- WRAPPERS AUTH -----
+        window.authCreerCompte = async (pseudo, mdp) => {
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, pseudo + "@fakeemail.com", mdp);
+                console.log("Compte créé :", userCredential.user);
+                return true;
+            } catch (error) {
+                console.error(error);
+                return false;
+            }
+        };
+
+        window.authConnexion = async (pseudo, mdp) => {
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, pseudo + "@fakeemail.com", mdp);
+                console.log("Connecté :", userCredential.user);
+                return { uid: userCredential.user.uid, email: userCredential.user.email };
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        };
+
+        // Exemple Firestore
         async function ajouterTrain(id, nom, type) {
             await setDoc(doc(db, "trains", id), {
                 nom: nom,
@@ -279,7 +292,6 @@
             console.log("Train ajouté !");
         }
 
-        // Exemple : lire tous les trains
         async function listerTrains() {
             const querySnapshot = await getDocs(collection(db, "trains"));
             querySnapshot.forEach((doc) => {
@@ -290,8 +302,8 @@
         // Test
         ajouterTrain("T001", "TGV Express", "Voyageur");
         listerTrains();
-
     </script>
+
     <!-- MENU CONNEXION / INSCRIPTION -->
     <div id="menuConnexion">
         <div id="menuConnexionInner">
@@ -309,7 +321,6 @@
         window.onload = () => {
             const menu = document.getElementById('menuConnexion');
             const msg = document.getElementById('menuMsg');
-
             const jeu = document.getElementById('jeu');
             if (jeu) jeu.style.display = 'none';
 
@@ -382,12 +393,64 @@
 `;
         document.head.appendChild(style);
         window.addEventListener("DOMContentLoaded", () => {
-            updatePlayerOnOpen().then(data => {
-                console.log("Joueur chargé et game mis à jour :", data);
-            });
+            if (window.updatePlayerOnOpen) {
+                updatePlayerOnOpen().then(data => {
+                    console.log("Joueur chargé et game mis à jour :", data);
+                });
+            }
         });
+    </script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
-</body >
-            <button onclick="location.href='hub.html'">Accéder au Hub des pages</button>
+        // Config Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZ0aKxn8Nxao8vlluD0nTbBssG7lzSwPo",
+            authDomain: "rail-empire-b5278.firebaseapp.com",
+            projectId: "rail-empire-b5278",
+            storageBucket: "rail-empire-b5278.firebasestorage.app",
+            messagingSenderId: "391417610159",
+            appId: "1:391417610159:web:18c8ec8b692d9cbee0b95a",
+            measurementId: "G-TME87RHCTC"
+        };
 
-</html >
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Transforme le pseudo en email fictif pour Firebase
+        function pseudoToEmail(pseudo) {
+            return `${pseudo.replace(/\s+/g, '').toLowerCase()}@trainempire.fake`;
+        }
+
+        // Création d’un compte
+        window.authCreerCompte = async function (pseudo, mdp) {
+            try {
+                const email = pseudoToEmail(pseudo);
+                const userCredential = await createUserWithEmailAndPassword(auth, email, mdp);
+                console.log("Compte créé :", userCredential.user.uid);
+                return true;
+            } catch (error) {
+                console.error("Erreur création compte :", error.code, error.message);
+                return false;
+            }
+        }
+
+        // Connexion
+        window.authConnexion = async function (pseudo, mdp) {
+            try {
+                const email = pseudoToEmail(pseudo);
+                const userCredential = await signInWithEmailAndPassword(auth, email, mdp);
+                console.log("Connecté :", userCredential.user.uid);
+                return { uid: userCredential.user.uid, email: userCredential.user.email };
+            } catch (error) {
+                console.error("Erreur connexion :", error.code, error.message);
+                return null;
+            }
+        }
+    </script>
+
+</body>
+
+</html>
